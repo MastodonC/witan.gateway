@@ -1,12 +1,13 @@
 # witan.gateway
 
-FIXME
+Experimental CQRS HTTP gateway
 
 ## Usage
 
 ### Run the application locally
 
-`lein ring server`
+`lein repl`
+`(go)`
 
 ### Run the tests
 
@@ -15,13 +16,9 @@ FIXME
 ### Packaging and running as standalone jar
 
 ```
-lein do clean, ring uberjar
+lein do clean, uberjar
 java -jar target/server.jar
 ```
-
-### Packaging as war
-
-`lein ring uberwar`
 
 ## License
 
