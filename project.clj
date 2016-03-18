@@ -15,5 +15,6 @@
   :profiles {:uberjar {:aot  [witan.gateway.server]
                        :main witan.gateway.server}
              :dev {:source-paths ["src" "dev-src"]
-                   :dependencies [[org.clojure/tools.namespace "0.2.4"]]
+                   :dependencies [[org.clojure/tools.namespace "0.2.4"]
+                                  [ring/ring-mock "0.3.0"]]
                    :repl-options {:init-ns user}}})
