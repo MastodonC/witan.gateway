@@ -28,8 +28,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn get-client-ip [req]
+  (if-let [ips (get-in req [:headers "x-forwarded-for"])]
+    (-> ips (clojure.string/split #",") first)
+    (:remote-addr req)))
+
 (defn receive-command!
-  [{:keys [command version] :as payload} kafka]
+  [{:keys [command version] :as payload} kafka req]
   (let [now (java.util.Date.)
         id (base64/encode (clojure.string/join "^" [now command version (java.util.UUID/randomUUID)]))
         updated-payload
@@ -37,6 +42,8 @@
             (assoc :command (keyword command))
             (assoc :version (or version "tbd"))
             (assoc :id id)
+            (assoc :origin (get-client-ip req))
+            (assoc :handled-by (:server-name req))
             (assoc :received-at now))]
     (swap! commands-seen assoc id updated-payload)
     (p/send-message! kafka updated-payload)
@@ -75,12 +82,12 @@
                  :summary "Recovers a command receipt and responds with status"
                  (fetch-command id))
 
-            (POST "/command" []
+            (POST "/command" req
                   :components [kafka]
                   :return CommandReceipt
                   :body [command CommandPost]
                   :summary "Receives a command"
-                  (receive-command! command kafka))
+                  (receive-command! command kafka req))
 
             (GET "/query" []
                  :summary "Performs the desired query"
