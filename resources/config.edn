@@ -1,0 +1,16 @@
+{:kafka {:zk {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+                              :production "master.mesos"}
+              :port 2181
+              :group-id "witan.gateway.consumer"}}
+
+ :cassandra {:host #profile {:development #or [#env CASSANDRA "127.0.0.1"]
+                             :production "cassandra-dcos-node.cassandra.dcos.mesos"}
+             :keyspace "witan_gateway"
+             :replication-factor #profile {:development 1
+                                           :production 3}}
+ :webserver {:port 30015}
+ :queries {:workspace {:host #profile {:development "127.0.0.1"
+                                       :production "witan-workspace.marathon.mesos"}
+                       :port "20015"}}
+ :log {:level #profile {:development :trace
+                        :production :info}}}
