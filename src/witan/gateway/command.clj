@@ -1,6 +1,7 @@
 (ns witan.gateway.command
   (:require [schema.core :as s]
-            [ring.util.http-response :refer [accepted]]
+            [ring.util.http-response :refer [accepted
+                                             internal-server-error]]
             [witan.gateway.protocols :as p]))
 
 (s/defschema POST
@@ -23,5 +24,6 @@
                :origin origin
                :handled-by (:server-name req)
                :received-at now)]
-    (p/send-message! kafka :command updated-payload)
-    (accepted {:receipt id})))
+    (if-let [err (p/send-message! kafka :command updated-payload)]
+      (internal-server-error err)
+      (accepted {:receipt id}))))

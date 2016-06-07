@@ -18,9 +18,13 @@
     (let [message (json/generate-string raw-message)]
       (if-let [{:keys [connection]} component]
         (if-let [error (kafka/send-message connection (kafka/message (name topic) (.getBytes message)))]
-          (log/error "Failed to send message to Kafka:" error)
+          (do
+            (log/error "Failed to send message to Kafka:" error)
+            error)
           (log/debug "Message was sent to Kafka:" topic message))
-        (log/error "There is no connection to Kafka."))))
+        (do
+          (log/error "There is no connection to Kafka.")
+          "There is no connection to Kafka."))))
 
   component/Lifecycle
   (start [component]
