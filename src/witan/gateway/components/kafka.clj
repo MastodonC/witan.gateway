@@ -9,6 +9,9 @@
             [clj-kafka.core             :as kafka-core]
             [clojure.core.async         :as async :refer [go-loop chan <! close! put!]]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Producer
+
 (defrecord KafkaProducer [host port]
   SendMessage
   (send-message! [component topic raw-message]
@@ -44,6 +47,7 @@
   (map->KafkaProducer args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Consumer
 
 (defn start-listening! [consumer topic receiver receiver-ctx]
   (async/go
