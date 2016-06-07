@@ -16,12 +16,12 @@
   (let [now (java.util.Date.)
         id (java.util.UUID/randomUUID)
         updated-payload
-        (-> payload
-            (assoc :command (keyword command))
-            (assoc :version (or version "tbd"))
-            (assoc :id id)
-            (assoc :origin origin)
-            (assoc :handled-by (:server-name req))
-            (assoc :received-at now))]
+        (assoc payload
+               :command (keyword command)
+               :version (or version "tbd")
+               :id id
+               :origin origin
+               :handled-by (:server-name req)
+               :received-at now)]
     (p/send-message! kafka :command updated-payload)
     (accepted {:receipt id})))
