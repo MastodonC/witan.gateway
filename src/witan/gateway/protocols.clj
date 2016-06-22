@@ -12,7 +12,7 @@
 ;;;;;;;;;
 
 (defprotocol RouteQuery
-  (route-query [this route params]))
+  (route-query [this payload]))
 
 ;;;;;;;;;
 

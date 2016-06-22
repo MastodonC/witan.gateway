@@ -1,32 +1,45 @@
 (ns witan.gateway.components.query-router
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
-            [ring.util.http-response    :refer [ok not-found failed-dependency]]
             [witan.gateway.protocols    :as p :refer [RouteQuery]]
-            [clj-http.client            :as client]))
+            [clj-http.client            :as client]
+            [clojure.data.codec.base64  :as b64]))
 
-
+(defn detect-namespace
+  [p]
+  (let [x (-> p first first)]
+    (if (keyword? x)
+      (keyword (namespace x))
+      (when (and (coll? x)
+                 (keyword? (first x)))
+        (keyword (namespace (first x)))))))
 
 (defrecord QueryRouter [service-map]
   RouteQuery
-  (route-query [this route params]
-    (let [[nsp query] ((juxt (comp keyword namespace) name) route)]
-      (if (contains? service-map nsp)
+  (route-query [this payload]
+    (log/debug payload )
+    (let [nsp (detect-namespace payload)]
+      (if (and nsp (contains? service-map nsp))
         (let [{:keys [host port]} (get service-map nsp)
-              url (str "http://" host ":" port "/" query)]
-          (log/debug "Routing query to" url params)
+              encoded-query (-> payload
+                                (pr-str)
+                                (.getBytes "utf-8")
+                                (b64/encode)
+                                (String.))
+              url (str "http://" host ":" port "/query/" encoded-query)]
+          (log/debug "Routing query to" url)
           (try
-            (let [{:keys [status body headers] :as response} (client/get url {:query-params params})]
+            (let [{:keys [status body headers] :as response} (client/get url)]
               (when-not (= status 200)
                 (log/warn "Query returned an odd status code:" response))
-              response)
+              {:query/result (:body response)})
             (catch java.net.ConnectException _ (do
                                                  (log/error "Couldn't connect to" url)
-                                                 (failed-dependency)))
+                                                 {:query/error "Service not available" :query/original payload}))
             (catch Exception e (let [{:keys [status body]} (ex-data e)]
-                                 (log/error "Response returned a bad status code" status body "||" url params)
-                                 {:status status}))))
-        (not-found))))
+                                 (log/error "Response returned a bad status code" status body "||" url)
+                                 {:query/error "Service returned an error status." :query/original payload :query/error-details body}))))
+        {:query/error "Service not found." :query/original payload})))
 
   component/Lifecycle
   (start [component]

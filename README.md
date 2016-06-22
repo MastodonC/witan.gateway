@@ -1,25 +1,22 @@
 # witan.gateway
 
-Experimental CQRS HTTP gateway
+CQRS HTTP gateway
 
 ## Usage
 
-### Run the application locally
-
-`lein repl`
-`(go)`
-
-### Run the tests
-
-`lein test`
-
-### Packaging and running as standalone jar
-
+### Production
 ```
-lein do clean, uberjar
-java -jar target/server.jar
+lein uberjar
+java -jar target/witan.gateway-standalone.jar
 ```
+
+### Development
+```
+docker-compose up -d
+lein run -m witan.gateway.system development
+```
+
 
 ## License
 
-Copyright ©  FIXME
+Copyright © MastodonC
