@@ -1,7 +1,6 @@
 (ns witan.gateway.components.receipts
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
-            [ring.util.http-response    :refer [ok not-found]]
             [witan.gateway.protocols    :as p :refer [ManageReceipts Database]]
             [cheshire.core              :as json]
             [schema.core                :as s]))
@@ -36,9 +35,11 @@
                    (assoc resp :event {:key event :id id})
                    (assoc resp :error error))
             resp (if (and (not error) (:id params)) (update resp :event #(assoc % :resource-id (:id params))) resp)]
-        (ok resp))
-      (not-found {:status :not-found
-                  :receipt receipt})))
+        {:status 200
+         :body resp})
+      {:status 404
+       :body {:status :not-found
+              :receipt receipt}}))
 
   component/Lifecycle
   (start [component]

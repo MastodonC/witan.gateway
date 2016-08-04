@@ -9,8 +9,8 @@
              :replication-factor #profile {:development 1
                                            :production 3}}
  :webserver {:port 30015}
- :queries {:workspace {:host #profile {:development "127.0.0.1"
-                                       :production "witan-workspace.marathon.mesos"}
-                       :port "20015"}}
+ :queries {:workspaces {:host #profile {:development "127.0.0.1"
+                                        :production "witan-workspace.marathon.mesos"}
+                        :port "20015"}}
  :log {:level #profile {:development :trace
                         :production :info}}}
