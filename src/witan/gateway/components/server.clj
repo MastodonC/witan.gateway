@@ -27,8 +27,7 @@
                                (wrap-components this)
                                (wrap-content-type "application/json")
                                (wrap-cors :access-control-allow-origin [#".*"]
-                                          :access-control-allow-methods [:get :post])
-                               #_(wrap-log))
+                                          :access-control-allow-methods [:get :post]))
                            {:port port})))
   (stop [this]
     (log/info "Stopping server")
