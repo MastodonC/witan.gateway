@@ -94,7 +94,7 @@
 (defmethod handle-message
   :default
   [_ msg _]
-  (println "UNKNOWN MESSAGE:" (:type msg) msg))
+  (log/error "Received an unknown message:" (:type msg) msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection Handling
