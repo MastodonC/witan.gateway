@@ -4,7 +4,6 @@
             [schema.core :as s]
             [cheshire.core :as json]
             [witan.gateway.command :as command]
-            [witan.gateway.components.receipts :as receipts]
             [witan.gateway.protocols :as p]
             [witan.gateway.schema :as rs]
             [clojure.core.async :as async :refer [chan go go-loop put! <!]]
@@ -25,7 +24,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Defs
 
-(defonce channels (atom #{}))
 (defonce receipts (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,21 +38,16 @@
 (defn send-message!
   [ch m]
   (if-let [err (rs/check-message "1.0" m)]
-    (log/error "Failed to send a message - validation failed:" err)
+    (log/error "Failed to send a message - validation failed:" (str err))
     (send-edn! ch m)))
 
 (defn dispatch-event!
-  [key version params receipt]
-  (when-let [{:keys [ch]} (get @receipts receipt)]
-    (try
-      (send-message! ch {:message/type :event
-                         :event/key key
-                         :event/version version
-                         :event/params params
-                         :event/created-at (iso-dt-now)
-                         :command/receipt receipt})
-      (catch Exception e
-        (println "Failed to dispatch event:" e)))))
+  [ch receipt event]
+  (try
+    (log/debug "Dispatching" event "to" ch)
+    (send-message! ch event)
+    (catch Exception e
+      (println "Failed to dispatch event:" e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
@@ -74,13 +67,16 @@
 
 (defmethod handle-message
   :command
-  [ch {:keys [command/id command/key command/version] :as command} {:keys [kafka]}]
+  [ch {:keys [command/id command/key command/version] :as command} {:keys [kafka connections]}]
   (let [receipt (java.util.UUID/randomUUID)
         now (iso-dt-now)]
-    (swap! receipts assoc receipt {:ch ch :at (t/now)})
+    (p/add-receipt! connections (partial dispatch-event! ch receipt) receipt)
     (if-let [error (command/receive-command!
                     receipt
-                    (assoc command :command/created-at now)
+                    (assoc command
+                           :command/created-at now
+                           :command/receipt receipt
+                           :message/type :command-processed)
                     kafka)]
       (do
         (log/error "Failed to send msg to Kafka:" error)) ;; TODO do we tell the client?
@@ -99,17 +95,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection Handling
 
-(defn disconnect! [channel status]
-  (swap! channels #(remove #{channel} %)))
+(defn disconnect! [cm channel status]
+  (p/remove-connection! cm channel))
 
-(defn connect! [channel]
-  (swap! channels conj channel))
+(defn connect! [cm channel]
+  (p/add-connection! cm channel))
 
 (defn ws-handler [request]
   (let [components (:witan.gateway.components.server/components request)]
     (with-channel request channel
-      (connect! channel)
-      (on-close channel (partial disconnect! channel))
+      (connect! (:connections components) channel)
+      (on-close channel (partial disconnect! (:connections components) channel))
       (on-receive channel #(try
                              (let [msg (read-string %)
                                    error (rs/check-message "1.0" msg)]

@@ -1,5 +1,5 @@
 (ns witan.gateway.components.kafka
-  (:require [witan.gateway.protocols    :refer [SendMessage]]
+  (:require [witan.gateway.protocols    :as p]
             [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [cheshire.core              :as json]
@@ -13,7 +13,7 @@
 ;; Producer
 
 (defrecord KafkaProducer [host port]
-  SendMessage
+  p/SendMessage
   (send-message! [component topic raw-message]
     (let [message (json/generate-string raw-message)]
       (if-let [{:keys [connection]} component]

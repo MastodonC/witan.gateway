@@ -38,7 +38,7 @@
                                                  {:query/error "Service not available" :query/original payload}))
             (catch Exception e (let [{:keys [status body]} (ex-data e)]
                                  (log/error "Response returned a bad status code" status body "||" url)
-                                 {:query/error "Service returned an error status." :query/original payload :query/error-details body}))))
+                                 {:query/error "Service returned an error status." :query/original (pr-str payload) :query/error-details body}))))
         {:query/error "Service not found." :query/original payload})))
 
   component/Lifecycle

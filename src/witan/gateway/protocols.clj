@@ -5,10 +5,11 @@
 
 ;;;;;;;;;
 
-(defprotocol ManageReceipts
-  (store-event! [this event])
-  (check-receipt [this receipt]))
-
+(defprotocol ManageConnections
+  (process-event! [this event])
+  (add-receipt! [this cb id])
+  (add-connection! [this connection])
+  (remove-connection! [this connection]))
 ;;;;;;;;;
 
 (defprotocol RouteQuery
