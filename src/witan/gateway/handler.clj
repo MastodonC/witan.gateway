@@ -22,11 +22,6 @@
   (tf/unparse (tf/formatters :basic-date-time) (t/now)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Defs
-
-(defonce receipts (atom {}))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
 
 (defn send-edn!
@@ -44,10 +39,10 @@
 (defn dispatch-event!
   [ch receipt event]
   (try
-    (log/debug "Dispatching" event "to" ch)
+    (log/debug "Dispatching event to" ch)
     (send-message! ch event)
     (catch Exception e
-      (println "Failed to dispatch event:" e))))
+      (log/error "Failed to dispatch event:" e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling

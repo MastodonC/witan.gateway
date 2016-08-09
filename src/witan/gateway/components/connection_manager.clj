@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
+            [schema.core                :as s]
             [schema.coerce              :as coerce]
             [witan.gateway.protocols    :as p :refer [ManageConnections]]
             [witan.gateway.schema       :as wgs]))
@@ -12,11 +13,14 @@
 (defrecord ConnectionManager []
   ManageConnections
   (process-event! [this event]
-    (when-let [{:keys [cb]} (get @receipts (:command/receipt event))]
-      (let [result ((coerce/coercer (get wgs/Event "1.0") coerce/json-coercion-matcher) event)]
-        (if (contains? result :error)
-          (log/error "Event schema coercion failed: " (pr-str (:error result)) event)
-          (cb result)))))
+    (try
+      (when-let [{:keys [cb]} (get @receipts (:command/receipt event))]
+        (let [result ((coerce/coercer (get wgs/Event "1.0") coerce/json-coercion-matcher) event)]
+          (if (contains? result :error)
+            (log/error "Event schema coercion failed: " (pr-str (:error result)) event)
+            (cb result))))
+      (catch Exception e
+        (log/error "Error whilst processing an event:" event e))))
   (add-connection! [this connection]
     (swap! channels conj connection)
     (log/info "Added connection. Total:" (count @channels)))
