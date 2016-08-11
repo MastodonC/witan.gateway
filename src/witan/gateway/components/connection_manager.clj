@@ -15,7 +15,7 @@
   (process-event! [this event]
     (try
       (when-let [{:keys [cb]} (get @receipts (:command/receipt event))]
-        (let [result ((coerce/coercer (get wgs/Event "1.0") coerce/json-coercion-matcher) event)]
+        (let [result ((coerce/coercer (get wgs/Event "1.0.0") coerce/json-coercion-matcher) event)]
           (if (contains? result :error)
             (log/error "Event schema coercion failed: " (pr-str (:error result)) event)
             (cb result))))

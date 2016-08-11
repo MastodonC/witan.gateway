@@ -32,7 +32,7 @@
 
 (defn send-message!
   [ch m]
-  (if-let [err (rs/check-message "1.0" m)]
+  (if-let [err (rs/check-message "1.0.0" m)]
     (log/error "Failed to send a message - validation failed:" (str err))
     (send-edn! ch m)))
 
@@ -103,7 +103,7 @@
       (on-close channel (partial disconnect! (:connections components) channel))
       (on-receive channel #(try
                              (let [msg (read-string %)
-                                   error (rs/check-message "1.0" msg)]
+                                   error (rs/check-message "1.0.0" msg)]
                                (if-not error
                                  (handle-message channel msg components)
                                  (send-edn! channel {:error error :original msg})))

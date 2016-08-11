@@ -12,7 +12,7 @@
                  [compojure "1.5.1"]
                  [clj-http "2.1.0"]
                  [aero "1.0.0-beta5"]
-                 [witan.gateway.schema "0.1.1-SNAPSHOT"]
+                 [witan.gateway.schema "0.1.1"]
                  [clj-time "0.12.0"]
                  [org.clojure/data.codec "0.1.0"]]
   :source-paths ["src"]
