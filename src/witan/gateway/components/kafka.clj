@@ -30,18 +30,23 @@
   (start [component]
     (log/info "Starting Kafka producer...")
     (log/info "Building broker list from ZooKeeper:" host port)
-    (let [broker-string (->>
-                         (zk/brokers {"zookeeper.connect" (str host ":" port)})
-                         (map (juxt :host :port))
-                         (map (partial interpose \:))
-                         (map (partial apply str))
-                         (interpose \,)
-                         (apply str))
-          _ (log/debug "Broker list" broker-string)
-          connection (kafka/producer {"metadata.broker.list" broker-string
-                                      "serializer.class" "kafka.serializer.DefaultEncoder"
-                                      "partitioner.class" "kafka.producer.DefaultPartitioner"})]
-      (assoc component :connection connection)))
+    (let [brokers (zk/brokers {"zookeeper.connect" (str host ":" port)})]
+      (if (not-empty brokers)
+        (let [broker-string (->>
+                             brokers
+                             (map (juxt :host :port))
+                             (map (partial interpose \:))
+                             (map (partial apply str))
+                             (interpose \,)
+                             (apply str))
+              _ (log/info "Kafka broker list:" broker-string)
+              connection (kafka/producer {"metadata.broker.list" broker-string
+                                          "serializer.class" "kafka.serializer.DefaultEncoder"
+                                          "partitioner.class" "kafka.producer.DefaultPartitioner"})]
+          (assoc component :connection connection))
+        (do
+          (log/error "No Kafka brokers were found.")
+          component))))
 
   (stop [component]
     (log/info "Stopping Kafka producer...")
