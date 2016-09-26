@@ -1,34 +1,29 @@
 (ns witan.gateway.logstash-appender
-  (:require [taoensso.timbre :as timbre]
-            [cheshire.core :as cheshire]))
+  (:require [taoensso.timbre :as log]
+            [clojure.string :as str]))
 
-;; https://github.com/ptaoussanis/timbre/blob/master/src/taoensso/timbre/appenders/3rd_party/logstash.clj
+;; https://github.com/MastodonC/whiner-timbre/blob/master/src/whiner/handler.clj
 
-(def iso-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+(def logback-timestamp-opts
+  "Controls (:timestamp_ data)"
+  {:pattern  "yyyy-MM-dd HH:mm:ss,SSS"
+   :locale   :jvm-default
+   :timezone :utc})
 
-(defn data->json-stream
-  [data writer opts]
-  ;; Note: this it meant to target the logstash-filter-json; especially "message" and "@timestamp" get a special meaning there.
-  (let [stacktrace-str (if-let [pr (:pr-stacktrace opts)]
-                         #(with-out-str (pr %))
-                         timbre/stacktrace)]
-    (cheshire/generate-stream
-     (merge (:context data)
-            {:level (:level data)
-             :namespace (:?ns-str data)
-             :file (:?file data)
-             :line (:?line data)
-             :stacktrace (some-> (force (:?err_ data)) (stacktrace-str))
-             :hostname (force (:hostname_ data))
-             :message (force (:msg_ data))
-             "@timestamp" (:instant data)})
-     writer
-     (merge {:date-format iso-format
-             :pretty false}
-            opts))))
 
 (defn output-fn
-  [data]
-  (let [out (java.io.StringWriter.)]
-    (data->json-stream data out nil)
-    (str out)))
+  "Default (fn [data]) -> string output fn.
+  Use`(partial default-output-fn <opts-map>)` to modify default opts."
+  ([     data] (output-fn nil data))
+  ([opts data] ; For partials
+   (let [{:keys [no-stacktrace? stack-fonts]} opts
+         {:keys [level ?err #_vargs msg_ ?ns-str hostname_
+                 timestamp_ ?line]} data]
+     (str
+      (force timestamp_)  " "
+      (str/upper-case (name level))  " "
+      "[" (or ?ns-str "?") ":" (or ?line "?") "] - "
+      (force msg_)
+      (when-not no-stacktrace?
+        (when-let [err ?err]
+          (str "\n" (log/stacktrace err opts))))))))

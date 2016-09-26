@@ -12,6 +12,11 @@
     (log/info "REQUEST:" request)
     (handler request)))
 
+(defn wrap-catch-exceptions [handler]
+  (fn [request]
+    (try (handler request)
+         (catch Throwable t (log/error t)))))
+
 (defn wrap-components
   "Assoc given components to the request."
   [handler components]
@@ -24,6 +29,7 @@
     (log/info (str "Server started at http://localhost:" port))
     (assoc this :http-kit (httpkit/run-server
                            (-> #'app
+                               (wrap-catch-exceptions)
                                (wrap-components this)
                                (wrap-log)
                                (wrap-content-type "application/json")
