@@ -43,7 +43,7 @@
     (Thread/setDefaultUncaughtExceptionHandler
      (reify Thread$UncaughtExceptionHandler
        (uncaughtException [_ thread ex]
-         (log/error ex))))
+         (timbre/error ex))))
 
     (component/start
      (new-system profile))))
