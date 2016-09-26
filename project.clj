@@ -16,7 +16,7 @@
                  [clj-time "0.12.0"]
                  [org.clojure/data.codec "0.1.0"]]
   :source-paths ["src"]
-  :profiles {:uberjar {:aot  [witan.gateway.system]
+  :profiles {:uberjar {:aot  :all
                        :main witan.gateway.system
                        :uberjar-name "witan.gateway-standalone.jar"}
              :dev {:source-paths ["dev-src"]

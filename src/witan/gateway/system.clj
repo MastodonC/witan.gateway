@@ -1,4 +1,5 @@
 (ns witan.gateway.system
+  (:gen-class)
   (:require [com.stuartsierra.component            :as component]
             [aero.core                             :refer [read-config]]
             [witan.gateway.logstash-appender       :as logstash]
