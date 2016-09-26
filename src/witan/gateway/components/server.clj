@@ -9,7 +9,7 @@
 
 (defn wrap-log [handler]
   (fn [request]
-    (log/debug "REQUEST:" request)
+    (log/info "REQUEST:" request)
     (handler request)))
 
 (defn wrap-components
@@ -25,6 +25,7 @@
     (assoc this :http-kit (httpkit/run-server
                            (-> #'app
                                (wrap-components this)
+                               (wrap-log)
                                (wrap-content-type "application/json")
                                (wrap-cors :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :post]))
