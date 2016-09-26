@@ -119,5 +119,5 @@
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
-  (GET "/" [] (str "hello"))
+  (GET "/health" [] (str "hello"))
   (POST "/login" req (login req)))
