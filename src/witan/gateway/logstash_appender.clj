@@ -1,7 +1,6 @@
 (ns witan.gateway.logstash-appender
-  (:require [taoensso.timbre :as timbre]
-            [clojure.string :as str]
-            [cheshire.core :as cheshire]))
+  (:require [taoensso.timbre :as log]
+            [clojure.string :as str]))
 
 ;; https://github.com/MastodonC/whiner-timbre/blob/master/src/whiner/handler.clj
 
