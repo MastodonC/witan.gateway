@@ -18,7 +18,10 @@
 
     ;; logging config
     (if (= profile :production)
-      (timbre/merge-config! (assoc (:log config) :output-fn logstash/output-fn))
+      (timbre/merge-config!
+       (assoc (:log config)
+              :output-fn (partial logstash/output-fn {:stacktrace-fonts {}})
+              :timestamp-opts logstash/logback-timestamp-opts))
       (timbre/merge-config! (:log config)))
 
     (component/system-map
@@ -35,5 +38,12 @@
 
 (defn -main [& [arg]]
   (let [profile (or (keyword arg) :production)]
+
+    ;; https://stuartsierra.com/2015/05/27/clojure-uncaught-exceptions
+    (Thread/setDefaultUncaughtExceptionHandler
+     (reify Thread$UncaughtExceptionHandler
+       (uncaughtException [_ thread ex]
+         (log/error ex))))
+
     (component/start
      (new-system profile))))
