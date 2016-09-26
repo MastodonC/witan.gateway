@@ -46,7 +46,7 @@
           (assoc component :connection connection))
         (do
           (log/error "No Kafka brokers were found.")
-          component))))
+          (throw (Exception. "No Kafka brokers were found."))))))
 
   (stop [component]
     (log/info "Stopping Kafka producer...")
