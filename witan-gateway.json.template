@@ -18,11 +18,6 @@
               "containerPort": 80,
               "hostPort": 80,
               "protocol": "tcp"
-          },
-          {
-              "containerPort": 30015,
-              "hostPort": 30015,
-              "protocol": "tcp"
           }
       ]
     }
@@ -33,11 +28,13 @@
   "cpus": 1,
   "mem": 2048,
   "healthChecks": [{
-        "protocol": "TCP",
-        "gracePeriodSeconds": 600,
-        "intervalSeconds": 30,
-        "portIndex": 0,
-        "timeoutSeconds": 10,
-        "maxConsecutiveFailures": 3
+     "path": "/health",
+     "portIndex": 0,
+     "protocol": "HTTP",
+     "gracePeriodSeconds": 300,
+     "intervalSeconds": 60,
+     "timeoutSeconds": 20,
+     "maxConsecutiveFailures": 3,
+     "ignoreHttp1xx": false
   }]
 }
