@@ -16,14 +16,27 @@ server {
 
         server_name witan-gateway;
 
-        location /api/ {
+        location /ws {
             access_log /var/log/nginx/access.log;
 
             # Assumes we are already behind a reverse proxy (e.g. ELB)
             real_ip_header X-Forwarded-For;
             set_real_ip_from 0.0.0.0/0;
 
-            proxy_pass http://${SERVER_ADDR}:${SERVER_PORT}/;
+            proxy_pass http://${SERVER_ADDR}:${SERVER_PORT};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+
+        location / {
+            access_log /var/log/nginx/access.log;
+
+            # Assumes we are already behind a reverse proxy (e.g. ELB)
+            real_ip_header X-Forwarded-For;
+            set_real_ip_from 0.0.0.0/0;
+
+            proxy_pass http://${SERVER_ADDR}:${SERVER_PORT};
         }
 }
 EOF

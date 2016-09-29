@@ -18,11 +18,6 @@
               "containerPort": 80,
               "hostPort": 80,
               "protocol": "tcp"
-          },
-          {
-              "containerPort": 30015,
-              "hostPort": 30015,
-              "protocol": "tcp"
           }
       ]
     }
