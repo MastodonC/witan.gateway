@@ -1,6 +1,13 @@
 machine:
   services:
     - docker
+  environment:
+    _JAVA_OPTIONS: "-Xms248m -Xmx1024m"
+
+
+test:
+  pre:
+    - docker-compose up -d
 
 deployment:
   #production:

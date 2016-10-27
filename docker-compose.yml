@@ -3,14 +3,8 @@ zookeeper:
         ports:
           - '2181:2181'
 kafka:
-        image: 'ches/kafka'
+        image: 'ches/kafka:0.10.0.1'
         links:
           - zookeeper:zookeeper
         ports:
           - "9092:9092"
-cassandra:
-        image: 'cassandra:2.2.4'
-        volumes:
-          - /usr/local/cassandra:/var/lib/cassandra
-        ports:
-          - "9042:9042"

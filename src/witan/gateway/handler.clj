@@ -1,15 +1,14 @@
 (ns witan.gateway.handler
   (:require [compojure.core :refer :all]
             [taoensso.timbre :as log]
-            [schema.core :as s]
+            [clojure.spec :as s]
             [cheshire.core :as json]
-            [witan.gateway.command :as command]
             [witan.gateway.protocols :as p]
-            [witan.gateway.schema :as rs]
             [clojure.core.async :as async :refer [chan go go-loop put! <!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [clj-time.core :as t]
-            [clj-time.format :as tf]))
+            [clj-time.format :as tf]
+            [kixi.comms :as comms]))
 
 
 (defn get-client-ip [req]
@@ -24,17 +23,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
 
-(defn send-edn!
+(defn send-outbound!
   [ch m]
-  (let [edn (pr-str m)]
-    (log/debug "Sending EDN:" edn)
-    (send! ch edn)))
+  (let [o (json/generate-string m)]
+    (log/debug "Sending:" o)
+    (send! ch o)))
 
 (defn send-message!
   [ch m]
-  (if-let [err (rs/check-message "1.0.0" m)]
+  (if-let [err (s/explain-data :kixi.comms.message/message m)]
     (log/error "Failed to send a message - validation failed:" (str err))
-    (send-edn! ch m)))
+    (send-outbound! ch m)))
 
 (defn dispatch-event!
   [ch receipt event]
@@ -48,39 +47,35 @@
 ;; Message Handling
 
 (defmulti handle-message
-  (fn [ch msg components] (:message/type msg)))
+  (fn [ch msg components] (:kixi.comms.message/type msg)))
 
 (defmethod handle-message
-  :query
+  "query"
   [ch {:keys [query/edn query/id]} {:keys [queries]}]
   (if-not (vector? edn)
-    (send-message! ch {:message/type :query-response :query/id id :query/error "Query needs to be a vector"})
+    (send-message! ch {:kixi.comms.message/type :query-response :query/id id :query/error "Query needs to be a vector"})
     (let [results (mapv (partial p/route-query queries) edn)]
-      (send-message! ch {:message/type :query-response :query/id id :query/results results}))))
+      (send-message! ch {:kixi.comms.message/type :query-response :query/id id :query/results results}))))
 
 ;;
 
 (defmethod handle-message
-  :command
-  [ch {:keys [command/id command/key command/version] :as command} {:keys [kafka connections]}]
-  (let [receipt (java.util.UUID/randomUUID)
-        now (iso-dt-now)]
-    (p/add-receipt! connections (partial dispatch-event! ch receipt) receipt)
-    (if-let [error (command/receive-command!
-                    receipt
-                    (assoc command
-                           :command/created-at now
-                           :command/receipt receipt
-                           :message/type :command-processed)
-                    kafka)]
-      (do
-        (log/error "Failed to send msg to Kafka:" error)) ;; TODO do we tell the client?
-      (send-message! ch {:message/type :command-receipt
-                         :command/key key
-                         :command/version version
-                         :command/id id
-                         :command/receipt receipt
-                         :command/received-at now}))))
+  "command"
+  [ch {:keys [kixi.comms.command/id
+              kixi.comms.command/key
+              kixi.comms.command/version
+              kixi.comms.command/created-at
+              kixi.comms.command/payload] :as command} {:keys [comms connections]}]
+  (p/add-receipt! connections (partial dispatch-event! ch id) id)
+  (comms/send-command! comms key version payload {:id id
+                                                  :created-at created-at}))
+
+(defmethod handle-message
+  "ping"
+  [ch {:keys [kixi.comms.ping/id]} {:keys [comms connections]}]
+  (send-outbound! ch {:kixi.comms.message/type "pong"
+                      :kixi.comms.pong/id id
+                      :kixi.comms.pong/created-at (iso-dt-now)}))
 
 (defmethod handle-message
   :default
@@ -102,14 +97,17 @@
       (connect! (:connections components) channel)
       (on-close channel (partial disconnect! (:connections components) channel))
       (on-receive channel #(try
-                             (let [msg (read-string %)
-                                   error (rs/check-message "1.0.0" msg)]
-                               (if-not error
+                             (let [raw-msg (json/parse-string % keyword)
+                                   msg     (if-not (= "ping" (:kixi.comms.message/type raw-msg))
+                                             (s/conform :kixi.comms.message/message raw-msg)
+                                             raw-msg)]
+                               (if-not (= msg :clojure.spec/invalid)
                                  (handle-message channel msg components)
-                                 (send-edn! channel {:error error :original msg})))
+                                 (send-outbound! channel {:error (s/explain-data :kixi.comms.message/message raw-msg)
+                                                          :original msg})))
                              (catch Exception e
                                (println "Exception thrown:" e)
-                               (send-edn! channel {:error (str e) :original %})))))))
+                               (send-outbound! channel {:error (str e) :original %})))))))
 
 (defn login
   [req]

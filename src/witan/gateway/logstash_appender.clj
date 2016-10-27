@@ -10,7 +10,6 @@
    :locale   :jvm-default
    :timezone :utc})
 
-
 (defn output-fn
   "Default (fn [data]) -> string output fn.
   Use`(partial default-output-fn <opts-map>)` to modify default opts."

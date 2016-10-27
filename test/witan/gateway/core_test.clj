@@ -1,11 +1,10 @@
 (ns witan.gateway.core-test
   (:require [cheshire.core :as cheshire]
             [clojure.test :refer :all]
-            [witan.gateway.handler :refer :all]
-            [ring.mock.request :as mock]))
+            [witan.gateway.handler :refer :all]))
 
-(defn parse-body [body]
-  (cheshire/parse-string (slurp body) true))
+#_(defn parse-body [body]
+    (cheshire/parse-string (slurp body) true))
 
 #_(deftest a-test
     (testing "Test GET request to /hello?name={a-name} returns expected response"

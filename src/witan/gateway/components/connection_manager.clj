@@ -2,10 +2,9 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
-            [schema.core                :as s]
-            [schema.coerce              :as coerce]
+            [clojure.spec               :as s]
             [witan.gateway.protocols    :as p :refer [ManageConnections]]
-            [witan.gateway.schema       :as wgs]))
+            [cheshire.core              :refer [parse-string]]))
 
 (defonce channels (atom #{}))
 (defonce receipts (atom {}))
@@ -15,8 +14,8 @@
   (process-event! [this event]
     (try
       (when-let [{:keys [cb]} (get @receipts (:command/receipt event))]
-        (let [result ((coerce/coercer (get wgs/Event "1.0.0") coerce/json-coercion-matcher) event)]
-          (if (contains? result :error)
+        (let [result (parse-string event)]
+          (if-let [error (s/explain-data :kixi.comms.message/event result)]
             (log/error "Event schema coercion failed: " (pr-str (:error result)) event)
             (cb result))))
       (catch Exception e

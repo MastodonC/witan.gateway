@@ -16,7 +16,6 @@ docker-compose up -d
 lein run -m witan.gateway.system development
 ```
 
-
 ## License
 
 Copyright © MastodonC
