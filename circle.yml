@@ -1,6 +1,15 @@
 machine:
   services:
     - docker
+  environment:
+    WAIT_TRIES: 100
+    WAIT_MS: 500
+    _JAVA_OPTIONS: "-Xms248m -Xmx1024m"
+
+
+test:
+  pre:
+    - docker-compose up -d
 
 deployment:
   #production:
