@@ -1,6 +1,8 @@
 (ns witan.gateway.integration.base
   (:require [user :as repl]
             [environ.core :refer [env]]
+            [gniazdo.core :as ws]
+            [witan.gateway.handler :refer [transit-encode transit-decode]]
             [taoensso.timbre :as log]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
@@ -11,6 +13,15 @@
   (Thread/sleep 2000)
   (all-tests)
   (repl/stop)
+  (reset! a nil))
+
+(defn create-ws-connection
+  [a received-fn all-tests]
+  (reset! a (ws/connect "ws://localhost:30015/ws"
+                        :on-receive #(if @received-fn
+                                       (@received-fn (transit-decode %)))))
+  (all-tests)
+  (ws/close @a)
   (reset! a nil))
 
 (defn wait-for-pred

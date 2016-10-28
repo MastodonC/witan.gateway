@@ -2,13 +2,15 @@
   (:require [compojure.core :refer :all]
             [taoensso.timbre :as log]
             [clojure.spec :as s]
-            [cheshire.core :as json]
             [witan.gateway.protocols :as p]
             [clojure.core.async :as async :refer [chan go go-loop put! <!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [clj-time.core :as t]
             [clj-time.format :as tf]
-            [kixi.comms :as comms]))
+            [kixi.comms :as comms]
+            [kixi.comms.time :refer [timestamp]]
+            [cognitect.transit :as tr])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 
 (defn get-client-ip [req]
@@ -16,16 +18,24 @@
     (-> ips (clojure.string/split #",") first)
     (:remote-addr req)))
 
-(defn iso-dt-now
-  []
-  (tf/unparse (tf/formatters :basic-date-time) (t/now)))
+(def transit-encoding-level :json-verbose) ;; DO NOT CHANGE
+(defn transit-decode [s]
+  (let [sbytes (.getBytes s)
+        in (ByteArrayInputStream. sbytes)
+        reader (tr/reader in transit-encoding-level)]
+    (tr/read reader)))
+(defn transit-encode [s]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (tr/writer out transit-encoding-level)]
+    (tr/write writer s)
+    (.toString out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
 
 (defn send-outbound!
   [ch m]
-  (let [o (json/generate-string m)]
+  (let [o (transit-encode m)]
     (log/debug "Sending:" o)
     (send! ch o)))
 
@@ -75,7 +85,7 @@
   [ch {:keys [kixi.comms.ping/id]} {:keys [comms connections]}]
   (send-outbound! ch {:kixi.comms.message/type "pong"
                       :kixi.comms.pong/id id
-                      :kixi.comms.pong/created-at (iso-dt-now)}))
+                      :kixi.comms.pong/created-at (timestamp)}))
 
 (defmethod handle-message
   :default
@@ -91,20 +101,32 @@
 (defn connect! [cm channel]
   (p/add-connection! cm channel))
 
+(defn conform
+  "There are some things we can't expect/don't want gateway clients to
+   provide so we add them here"
+  [msg]
+  (let [pre-process
+        (case (:kixi.comms.message/type msg)
+          "command" (assoc msg :kixi.comms.command/created-at (timestamp))
+          msg)
+        result
+        (case (:kixi.comms.message/type msg)
+          "ping" pre-process
+          (s/conform :kixi.comms.message/message pre-process))]
+    [pre-process result]))
+
 (defn ws-handler [request]
   (let [components (:witan.gateway.components.server/components request)]
     (with-channel request channel
       (connect! (:connections components) channel)
       (on-close channel (partial disconnect! (:connections components) channel))
       (on-receive channel #(try
-                             (let [raw-msg (json/parse-string % keyword)
-                                   msg     (if-not (= "ping" (:kixi.comms.message/type raw-msg))
-                                             (s/conform :kixi.comms.message/message raw-msg)
-                                             raw-msg)]
-                               (if-not (= msg :clojure.spec/invalid)
-                                 (handle-message channel msg components)
-                                 (send-outbound! channel {:error (s/explain-data :kixi.comms.message/message raw-msg)
-                                                          :original msg})))
+                             (let [raw-msg (transit-decode %)
+                                   [cleaned result] (conform raw-msg)]
+                               (if-not (= result :clojure.spec/invalid)
+                                 (handle-message channel result components)
+                                 (send-outbound! channel {:error (s/explain-data :kixi.comms.message/message cleaned)
+                                                          :original raw-msg})))
                              (catch Exception e
                                (println "Exception thrown:" e)
                                (send-outbound! channel {:error (str e) :original %})))))))
@@ -112,8 +134,8 @@
 (defn login
   [req]
   {:status 200
-   :body (json/generate-string {:id #uuid "00000000-0000-0000-0000-000000000000"
-                                :token "0jO2cOEJOh8mJQ3p9eh9EEBn9oBp2Wecb0upoIeoGkMv0nIjvg3ovJUvgrkGJNge"})})
+   :body (transit-encode {:id #uuid "00000000-0000-0000-0000-000000000000"
+                          :token "0jO2cOEJOh8mJQ3p9eh9EEBn9oBp2Wecb0upoIeoGkMv0nIjvg3ovJUvgrkGJNge"})})
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
