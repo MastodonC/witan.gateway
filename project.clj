@@ -10,6 +10,7 @@
                  [ring-cors "0.1.8"]
                  [compojure "1.5.1"]
                  [clj-http "2.1.0"]
+                 [environ "1.1.0"]
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [org.clojure/data.codec "0.1.0"]

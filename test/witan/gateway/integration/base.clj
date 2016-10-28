@@ -1,5 +1,7 @@
 (ns witan.gateway.integration.base
-  (:require [user :as repl]))
+  (:require [user :as repl]
+            [environ.core :refer [env]]
+            [taoensso.timbre :as log]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -13,10 +15,11 @@
 
 (defn wait-for-pred
   ([p]
-   (wait-for-pred p 100))
+   (wait-for-pred p (or (env :wait-tries) 65)))
   ([p tries]
-   (wait-for-pred p tries 500))
+   (wait-for-pred p tries (or (env :wait-ms) 500)))
   ([p tries ms]
+   (log)
    (loop [try tries]
      (when (and (pos? try) (not (p)))
        (Thread/sleep ms)
