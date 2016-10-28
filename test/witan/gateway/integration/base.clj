@@ -19,7 +19,7 @@
   ([p tries]
    (wait-for-pred p tries (or (env :wait-ms) 500)))
   ([p tries ms]
-   (log)
+   (log/info "Waiting for predicate -" tries "x" ms)
    (loop [try tries]
      (when (and (pos? try) (not (p)))
        (Thread/sleep ms)
