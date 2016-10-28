@@ -15,9 +15,11 @@
 
 (defn wait-for-pred
   ([p]
-   (wait-for-pred p (or (env :wait-tries) 65)))
+   (let [wait-tries (or (some-> (env :wait-tries) (Integer/valueOf)) 65)]
+     (wait-for-pred p wait-tries)))
   ([p tries]
-   (wait-for-pred p tries (or (env :wait-ms) 500)))
+   (let [wait-ms (or (some-> (env :wait-ms) (Integer/valueOf)) 500)]
+     (wait-for-pred p tries wait-ms)))
   ([p tries ms]
    (log/info "Waiting for predicate -" tries "x" ms)
    (loop [try tries]
