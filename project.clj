@@ -13,8 +13,8 @@
                  [environ "1.1.0"]
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
-                 [org.clojure/data.codec "0.1.0"]
-                 [kixi/kixi.comms "0.1.12"]]
+                 [kixi/kixi.comms "0.1.15"]
+                 [kixi/graph-router "0.1.8"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all
                        :main witan.gateway.system

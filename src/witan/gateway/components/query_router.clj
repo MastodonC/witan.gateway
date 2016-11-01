@@ -3,52 +3,62 @@
             [taoensso.timbre            :as log]
             [witan.gateway.protocols    :as p :refer [RouteQuery]]
             [clj-http.client            :as client]
-            [clojure.data.codec.base64  :as b64]))
+            [graph-router.core          :refer [with dispatch]]
+            ;;
+            [witan.gateway.queries.data-acquisition :as qda]
+            [witan.gateway.queries.workspace :as qw]))
 
-(defn detect-namespace
-  [p]
-  (let [x (-> p first first)]
-    (if (keyword? x)
-      (keyword (namespace x))
-      (when (and (coll? x)
-                 (keyword? (first x)))
-        (keyword (namespace (first x)))))))
+(def test-query-fields
+  [:foo/bar :hello/world])
+
+(defn test-query
+  [_]
+  {:foo/bar "Hello"
+   :hello/world "World"})
+
+(defn make-graph
+  [service-map]
+  {;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Workspaces
+   ;; - workspaces by owner
+   (with :workspace/list-by-owner qw/get-workspaces-by-owner)
+   qw/workspace-fields
+   ;; - workspace by id
+   (with :workspace/by-id qw/get-workspace-by-id)
+   qw/workspace-fields
+   ;; - functions
+   (with :workspace/available-functions qw/get-available-functions)
+   qw/function-fields
+   ;; - models
+   (with :workspace/available-models qw/get-available-models)
+   qw/model-fields
+   (with :workspace/model-by-name-and-version qw/get-model-by-name-and-version)
+   qw/model-fields
+
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Test
+   (with :test-query test-query) test-query-fields})
+
+(defn fix-list-entries
+  [m]
+  (apply hash-map (update-in (first m) [0] #(apply list %))))
 
 (defrecord QueryRouter [service-map]
   RouteQuery
-  (route-query [this payload]
-    (log/debug payload )
-    (let [nsp (detect-namespace payload)]
-      (if (and nsp (contains? service-map nsp))
-        (let [{:keys [host port]} (get service-map nsp)
-              encoded-query (-> payload
-                                (pr-str)
-                                (.getBytes "utf-8")
-                                (b64/encode)
-                                (String.))
-              url (str "http://" host ":" port "/query/" encoded-query)]
-          (log/debug "Routing query to" url)
-          (try
-            (let [{:keys [status body headers] :as response} (client/get url)]
-              (when-not (= status 200)
-                (log/warn "Query returned an odd status code:" response))
-              {:query/result (:body response)})
-            (catch java.net.ConnectException _ (do
-                                                 (log/error "Couldn't connect to" url)
-                                                 {:query/error "Service not available" :query/original payload}))
-            (catch Exception e (let [{:keys [status body]} (ex-data e)]
-                                 (log/error "Response returned a bad status code" status body "||" url)
-                                 {:query/error "Service returned an error status." :query/original (pr-str payload) :query/error-details body}))))
-        {:query/error "Service not found." :query/original payload})))
+  (route-query [{:keys [graph]} payload]
+    (log/info "Query:" payload)
+    (if (vector? (-> payload first first))
+      (dispatch graph (fix-list-entries payload))
+      (dispatch graph payload)))
 
   component/Lifecycle
   (start [component]
     (log/info "Starting Query Router")
-    component)
+    (assoc component :graph (make-graph service-map)))
 
   (stop [component]
     (log/info "Stopping Query Router")
-    component))
+    (dissoc component :graph)))
 
 (defn new-query-router [service-map]
   (->QueryRouter service-map))
