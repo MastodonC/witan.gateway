@@ -61,11 +61,15 @@
 
 (defmethod handle-message
   "query"
-  [ch {:keys [query/edn query/id]} {:keys [queries]}]
-  (if-not (vector? edn)
-    (send-message! ch {:kixi.comms.message/type :query-response :query/id id :query/error "Query needs to be a vector"})
-    (let [results (mapv (partial p/route-query queries) edn)]
-      (send-message! ch {:kixi.comms.message/type :query-response :query/id id :query/results results}))))
+  [ch {:keys [kixi.comms.query/body kixi.comms.query/id]} {:keys [queries]}]
+  (if-not (vector? body)
+    (send-message! ch {:kixi.comms.message/type "query-response"
+                       :kixi.comms.query/id id
+                       :kixi.comms.query/error "Query needs to be a vector"})
+    (let [results (mapv (partial p/route-query queries) body)]
+      (send-message! ch {:kixi.comms.message/type "query-response"
+                         :kixi.comms.query/id id
+                         :kixi.comms.query/results results}))))
 
 ;;
 
