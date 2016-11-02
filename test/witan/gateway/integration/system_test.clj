@@ -57,9 +57,12 @@
 
 (deftest submit-command->event-rountrip-test
   (let [result (atom nil)
+        fe-result (atom nil)
         id     (uuid)
         comms  (:comms @system)
-        payload {:foo 123}]
+        payload {:foo 123}
+        fixed-payload (assoc payload :bar 456)]
+    (reset! received-fn #(reset! fe-result (:kixi.comms.event/payload %)))
     (log/info "Submit Command->Event Roundtrip Test")
     (c/attach-command-handler! comms
                                :submit-command-test-2
@@ -85,4 +88,5 @@
                                           :kixi.comms.command/payload payload}))
     (wait-for-pred (fn [] @result))
     (is @result)
-    (is (= (assoc payload :bar 456) @result))))
+    (is (= fixed-payload @result))
+    (is (= fixed-payload @fe-result))))
