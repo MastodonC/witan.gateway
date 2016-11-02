@@ -25,7 +25,7 @@
     (component/system-map
      :comms       (kafka/map->Kafka (-> config :comms :kafka))
      :connections (component/using
-                   (new-connection-manager)
+                   (new-connection-manager (-> config :connections))
                    [:comms])
      :queries     (new-query-router (:queries config))
      :http-kit    (component/using

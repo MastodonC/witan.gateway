@@ -13,7 +13,8 @@
                  [environ "1.1.0"]
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
-                 [kixi/kixi.comms "0.1.15"]
+                 [zookeeper-clj "0.9.4"]
+                 [kixi/kixi.comms "0.1.16"]
                  [kixi/graph-router "0.1.8"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all
