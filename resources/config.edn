@@ -1,9 +1,15 @@
 {:comms {:kafka {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                                  :production "master.mesos"}
                  :port 2181}}
+ :connections {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+                               :production "master.mesos"}
+               :port 2181}
  :webserver {:port 30015}
  :queries {:workspace {:host #profile {:development "127.0.0.1"
                                        :production "witan-workspace.marathon.mesos"}
-                       :port "20015"}}
+                       :port "20015"}
+           :data-acquisition {:host #profile {:development "127.0.0.1"
+                                              :production "kixi-data-acquisition.marathon.mesos"}
+                              :port "40015"}}
  :log {:level #profile {:development :info
                         :production :info}}}
