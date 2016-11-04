@@ -11,3 +11,7 @@
 (defn requests-by-requester
   [_ id]
   [])
+
+(defn request-by-id
+  [_ id]
+  {})

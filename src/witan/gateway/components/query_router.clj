@@ -40,6 +40,9 @@
    (with :data-acquisition/requests-by-requester qda/requests-by-requester)
    qda/request-fields
 
+   (with :data-acquisition/request-by-id qda/request-by-id)
+   qda/request-fields
+
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Test
    (with :test-query test-query) test-query-fields})
