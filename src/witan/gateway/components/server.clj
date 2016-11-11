@@ -5,8 +5,7 @@
             [com.stuartsierra.component   :as component]
             [witan.gateway.handler        :refer [app]]
             [taoensso.timbre              :as log]
-            [ring.middleware.cors         :refer [wrap-cors]]
-            [kixi.comms                   :as comms]))
+            [ring.middleware.cors         :refer [wrap-cors]]))
 
 (defn wrap-log [handler]
   (fn [request]
@@ -26,7 +25,7 @@
 
 (defrecord HttpKit [port]
   component/Lifecycle
-  (start [{:keys [comms] :as this}]
+  (start [this]
     (log/info (str "Server started at http://localhost:" port))
     (assoc this :http-kit (httpkit/run-server
                            (-> #'app

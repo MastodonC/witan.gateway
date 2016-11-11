@@ -45,7 +45,8 @@
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Test
-   (with :test-query test-query) test-query-fields})
+   (with :test-query test-query)
+   test-query-fields})
 
 (defn fix-list-entries
   [m]
