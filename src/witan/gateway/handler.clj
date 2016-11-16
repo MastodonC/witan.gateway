@@ -144,14 +144,15 @@
   [{:keys [body] :as req} path]
   (let [params (transit-decode-bytes body)
         {:keys [host port]} (get-in req [:directory :heimdall])
-        _ (log/info "!!!!" params host port)
-        heimdall-url (str "http://" host ":" port "/" path)]
-    (update-in (http/post heimdall-url
-                          {:content-type :json
-                           :accept :json
-                           :throw-exceptions false
-                           :as :json
-                           :form-params params}) :body transit-encode)))
+        heimdall-url (str "http://" host ":" port "/" path)
+        r (http/post heimdall-url
+                     {:content-type :json
+                      :accept :json
+                      :throw-exceptions false
+                      :as :json
+                      :form-params params})]
+    (log/info "?????" r)
+    (update-in r :body transit-encode)))
 
 (defn signup
   "forward signup call to heimdall"
