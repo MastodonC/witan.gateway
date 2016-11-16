@@ -10,6 +10,8 @@ machine:
 test:
   pre:
     - docker-compose up -d
+    - sleep 10
+
 
 deployment:
   #production:
