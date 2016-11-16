@@ -27,10 +27,10 @@
      :connections (component/using
                    (new-connection-manager (-> config :connections))
                    [:comms])
-     :queries     (new-query-router (:queries config))
+     :queries     (new-query-router (:directory config))
      :http-kit    (component/using
                    (new-http-server (:webserver config))
-                   [:connections :comms :queries])
+                   [:connections :comms :directory])
      #_:kafka-consumer-events   #_(component/using
                                    (new-kafka-consumer (merge {:topic :event
                                                                :receiver #(process-event! %2 %1)} (-> config :kafka :zk)))
