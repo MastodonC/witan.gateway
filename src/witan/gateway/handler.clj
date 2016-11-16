@@ -152,7 +152,10 @@
                       :as :json
                       :form-params params})]
     (log/info "?????" r)
-    (update-in r :body transit-encode)))
+    (if (= 201 (:status r))
+      (update r :body transit-encode)
+      {:status (:status r)
+       :body (transit-encode {:error (:body r)})})))
 
 (defn signup
   "forward signup call to heimdall"
