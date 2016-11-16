@@ -29,12 +29,8 @@
                    [:comms])
      :queries     (new-query-router (:directory config))
      :http-kit    (component/using
-                   (new-http-server (:webserver config))
-                   [:connections :comms :directory])
-     #_:kafka-consumer-events   #_(component/using
-                                   (new-kafka-consumer (merge {:topic :event
-                                                               :receiver #(process-event! %2 %1)} (-> config :kafka :zk)))
-                                   {:receiver-ctx :connections}))))
+                   (new-http-server (:webserver config) (:directory config))
+                   [:connections :comms]))))
 
 (defn -main [& [arg]]
   (let [profile (or (keyword arg) :production)]
