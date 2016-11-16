@@ -7,6 +7,7 @@
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [clj-time.core :as t]
             [clj-time.format :as tf]
+            [clj-http.client :as http]
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
             [cognitect.transit :as tr])
@@ -136,7 +137,25 @@
                                (println "Exception thrown:" e)
                                (send-outbound! channel {:error (str e) :original %})))))))
 
+(defn post-to-heimdall
+  [{:keys [form-params] :as req} path]
+  (log/info form-params)
+  (let [directory (:directory (:witan.gateway.system/components req))
+        heimdall-url (str "http://" (:heimdall directory) "/" path)]
+    (update-in (http/post heimdall-url
+                          {:content-type :json
+                           :accept :json
+                           :throw-exceptions false
+                           :as :json
+                           :form-params form-params}) :body transit-encode)))
+
+(defn signup
+  "forward signup call to heimdall"
+  [req]
+  ((post-to-heimdall req "user")))
+
 (defn login
+  "forward login to heimdall and return tokens"
   [req]
   {:status 200
    :body (transit-encode {:id #uuid "00000000-0000-0000-0000-000000000000"
@@ -145,4 +164,5 @@
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/health" [] (str "hello"))
-  (POST "/login" req (login req)))
+  (POST "/signup" req signup)
+  (POST "/login" req login))
