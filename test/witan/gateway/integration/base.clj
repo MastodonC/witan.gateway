@@ -17,7 +17,10 @@
 
 (defn create-ws-connection
   [a received-fn all-tests]
+
+  ;; TODO only perform tests when on-connect called, include timeout
   (reset! a (ws/connect "ws://localhost:30015/ws"
+                        :on-connect #( )
                         :on-receive #(if @received-fn
                                        (@received-fn (transit-decode %)))))
   (all-tests)
