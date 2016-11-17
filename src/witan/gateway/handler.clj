@@ -92,7 +92,7 @@
 (defmethod handle-message
   "ping"
   [ch {:keys [kixi.comms.ping/id]} {:keys [comms connections]}]
-  (log/info "Received ping!")
+  (log/trace "Received ping!")
   (send-outbound! ch {:kixi.comms.message/type "pong"
                       :kixi.comms.pong/id id
                       :kixi.comms.pong/created-at (timestamp)}))
@@ -152,7 +152,6 @@
                       :throw-exceptions false
                       :as :json
                       :form-params params})]
-    (log/info "?????" r)
     (if (= 201 (:status r))
       (update r :body transit-encode)
       {:status (:status r)
