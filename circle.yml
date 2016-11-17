@@ -11,7 +11,8 @@ test:
   pre:
     - docker-compose up -d
     - sleep 10
-
+    - docker run --rm 'ches/kafka:0.10.1.0' kafka-topics.sh --create --topic command --replication-factor 1 --partitions 1 --zookeeper $(docker ps | grep -o "[a-z]\+_zookeeper_[0-9]" | xargs docker inspect --format '{{ .NetworkSettings.IPAddress }}'):2181
+    - sleep 2
 
 deployment:
   #production:
