@@ -13,13 +13,14 @@
 (defrecord ConnectionManager [host port]
   ManageConnections
   (process-event! [{:keys [receipts]} event]
-    (log/info "Got event:" event)
+    (log/info "Observed event" (:kixi.comms.event/id event))
     (when-let [id (:kixi.comms.command/id event)]
       (try
         (when-let [{:keys [cb]} (get @receipts id)]
           (if-let [error (s/explain-data :kixi.comms.message/event event)]
             (log/error "Event schema coercion failed: " (pr-str error) event)
             (do
+              (log/info "Sending event" (:kixi.comms.event/id event) "back to client")
               (cb event)
               (swap! receipts dissoc id)
               nil)))

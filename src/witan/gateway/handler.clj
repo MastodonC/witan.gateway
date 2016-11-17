@@ -7,6 +7,7 @@
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [clj-time.core :as t]
             [clj-time.format :as tf]
+            [clj-http.client :as http]
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
             [cognitect.transit :as tr])
@@ -19,6 +20,9 @@
     (:remote-addr req)))
 
 (def transit-encoding-level :json-verbose) ;; DO NOT CHANGE
+(defn transit-decode-bytes [in]
+  (let [reader (tr/reader in transit-encoding-level)]
+    (tr/read reader)))
 (defn transit-decode [s]
   (let [sbytes (.getBytes s)
         in (ByteArrayInputStream. sbytes)
@@ -81,12 +85,14 @@
               kixi.comms.command/created-at
               kixi.comms.command/payload] :as command} {:keys [comms connections]}]
   (p/add-receipt! connections (partial dispatch-event! ch id) id)
+  (log/info "Forwarding command" key version id)
   (comms/send-command! comms key version payload {:id id
                                                   :created-at created-at}))
 
 (defmethod handle-message
   "ping"
   [ch {:keys [kixi.comms.ping/id]} {:keys [comms connections]}]
+  (log/trace "Received ping!")
   (send-outbound! ch {:kixi.comms.message/type "pong"
                       :kixi.comms.pong/id id
                       :kixi.comms.pong/created-at (timestamp)}))
@@ -120,7 +126,7 @@
     [pre-process result]))
 
 (defn ws-handler [request]
-  (let [components (:witan.gateway.components.server/components request)]
+  (let [components (:components request)]
     (with-channel request channel
       (connect! (:connections components) channel)
       (on-close channel (partial disconnect! (:connections components) channel))
@@ -135,13 +141,34 @@
                                (println "Exception thrown:" e)
                                (send-outbound! channel {:error (str e) :original %})))))))
 
-(defn login
+(defn post-to-heimdall
+  [{:keys [body] :as req} path]
+  (let [params (transit-decode-bytes body)
+        {:keys [host port]} (get-in req [:directory :heimdall])
+        heimdall-url (str "http://" host ":" port "/" path)
+        r (http/post heimdall-url
+                     {:content-type :json
+                      :accept :json
+                      :throw-exceptions false
+                      :as :json
+                      :form-params params})]
+    (if (= 201 (:status r))
+      (update r :body transit-encode)
+      {:status (:status r)
+       :body (transit-encode {:error (:body r)})})))
+
+(defn signup
+  "forward signup call to heimdall"
   [req]
-  {:status 200
-   :body (transit-encode {:id #uuid "00000000-0000-0000-0000-000000000000"
-                          :token "0jO2cOEJOh8mJQ3p9eh9EEBn9oBp2Wecb0upoIeoGkMv0nIjvg3ovJUvgrkGJNge"})})
+  (post-to-heimdall req "user"))
+
+(defn login
+  "forward login to heimdall and return tokens"
+  [req]
+  (post-to-heimdall req "create-auth-token"))
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/health" [] (str "hello"))
+  (POST "/signup" req (signup req))
   (POST "/login" req (login req)))

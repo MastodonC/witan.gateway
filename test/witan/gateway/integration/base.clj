@@ -3,7 +3,8 @@
             [environ.core :refer [env]]
             [gniazdo.core :as ws]
             [witan.gateway.handler :refer [transit-encode transit-decode]]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.core.async :refer :all]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -17,12 +18,26 @@
 
 (defn create-ws-connection
   [a received-fn all-tests]
-  (reset! a (ws/connect "ws://localhost:30015/ws"
-                        :on-receive #(if @received-fn
-                                       (@received-fn (transit-decode %)))))
-  (all-tests)
-  (ws/close @a)
-  (reset! a nil))
+  (let [run-tests-ch (chan)
+        clean (fn []
+                (log/info "Closing websocket...")
+                (ws/close @a)
+                (reset! a nil))]
+    (log/info "Opening websocket...")
+    (reset! a (ws/connect "ws://localhost:30015/ws"
+                          :on-connect (fn [& _]
+                                        (log/info "Websocket on-connect called.")
+                                        (put! run-tests-ch true))
+                          :on-receive #(if @received-fn
+                                         (@received-fn (transit-decode %)))))
+    (alt!!
+      run-tests-ch    (do
+                        (log/info "Running all tests...")
+                        (all-tests)
+                        (clean))
+      (timeout 10000) (do
+                        (log/error "Websocket connection timed out.")
+                        (clean))) identity))
 
 (defn wait-for-pred
   ([p]

@@ -37,16 +37,17 @@
     (log/info "Submit Command Test")
     (c/attach-command-handler! comms
                                :submit-command-test-1
-                               :test/command
+                               :test/command1
                                "1.0.0"
                                (fn [{:keys [kixi.comms.command/payload]}]
+                                 (log/info "Submit Command Test - Handled command!")
                                  (reset! result payload)
                                  {:kixi.comms.message/type "event"
                                   :kixi.comms.event/key :test/command-received-1
                                   :kixi.comms.event/version "1.0.0"
                                   :kixi.comms.event/payload (assoc payload :bar 456)}))
     (ws/send-msg @wsconn (transit-encode {:kixi.comms.message/type "command"
-                                          :kixi.comms.command/key :test/command
+                                          :kixi.comms.command/key :test/command1
                                           :kixi.comms.command/version "1.0.0"
                                           :kixi.comms.command/id id
                                           :kixi.comms.command/created-at (timestamp)
@@ -66,7 +67,7 @@
     (log/info "Submit Command->Event Roundtrip Test")
     (c/attach-command-handler! comms
                                :submit-command-test-2
-                               :test/command
+                               :test/command2
                                "1.0.0"
                                (fn [{:keys [kixi.comms.command/payload]}]
                                  {:kixi.comms.message/type "event"
@@ -81,7 +82,7 @@
                                (reset! result payload)
                                nil))
     (ws/send-msg @wsconn (transit-encode {:kixi.comms.message/type "command"
-                                          :kixi.comms.command/key :test/command
+                                          :kixi.comms.command/key :test/command2
                                           :kixi.comms.command/version "1.0.0"
                                           :kixi.comms.command/id id
                                           :kixi.comms.command/created-at (timestamp)

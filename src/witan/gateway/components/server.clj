@@ -5,8 +5,7 @@
             [com.stuartsierra.component   :as component]
             [witan.gateway.handler        :refer [app]]
             [taoensso.timbre              :as log]
-            [ring.middleware.cors         :refer [wrap-cors]]
-            [kixi.comms                   :as comms]))
+            [ring.middleware.cors         :refer [wrap-cors]]))
 
 (defn wrap-log [handler]
   (fn [request]
@@ -22,15 +21,22 @@
   "Assoc given components to the request."
   [handler components]
   (fn [req]
-    (handler (assoc req ::components components))))
+    (handler (assoc req :components components))))
 
-(defrecord HttpKit [port]
+(defn wrap-directory
+  "Assoc directory to the request."
+  [handler directory]
+  (fn [req]
+    (handler (assoc req :directory directory))))
+
+(defrecord HttpKit [port directory]
   component/Lifecycle
-  (start [{:keys [comms] :as this}]
+  (start [this]
     (log/info (str "Server started at http://localhost:" port))
     (assoc this :http-kit (httpkit/run-server
                            (-> #'app
                                (wrap-catch-exceptions)
+                               (wrap-directory directory)
                                (wrap-components this)
                                (wrap-log)
                                (wrap-content-type "application/json")
@@ -44,5 +50,5 @@
     (dissoc this :http-kit)))
 
 (defn new-http-server
-  [args]
-  (map->HttpKit args))
+  [args directory]
+  (->HttpKit (:port args) directory))
