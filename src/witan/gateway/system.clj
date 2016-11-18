@@ -30,7 +30,7 @@
      :queries     (new-query-router (:directory config))
      :http-kit    (component/using
                    (new-http-server (:webserver config) (:directory config))
-                   [:connections :comms]))))
+                   [:connections :comms :queries]))))
 
 (defn -main [& [arg]]
   (let [profile (or (keyword arg) :production)]
