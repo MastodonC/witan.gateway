@@ -11,7 +11,8 @@
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
             [cognitect.transit :as tr])
-  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
+           [org.httpkit.BytesInputStream]))
 
 
 (defn get-client-ip [req]
@@ -57,6 +58,27 @@
     (catch Exception e
       (log/error "Failed to dispatch event:" e))))
 
+(defn post-to-heimdall
+  ([components path]
+   (post-to-heimdall components path nil))
+  ([components path params']
+   (let [params (if (and params' (or (= (type params') ByteArrayInputStream)
+                                     (= (type params') org.httpkit.BytesInputStream)))
+                  (transit-decode-bytes params')
+                  params')
+         {:keys [host port]} (get-in components [:directory :heimdall])
+         heimdall-url (str "http://" host ":" port "/" path)
+         r (http/post heimdall-url
+                      {:content-type :json
+                       :accept :json
+                       :throw-exceptions false
+                       :as :json
+                       :form-params params})]
+     (if (= 201 (:status r))
+       (update r :body transit-encode)
+       {:status (:status r)
+        :body (transit-encode {:error (:body r)})}))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
 
@@ -98,9 +120,20 @@
                       :kixi.comms.pong/created-at (timestamp)}))
 
 (defmethod handle-message
+  "refresh"
+  [ch {:keys [kixi.comms.auth/token-pair]} components]
+  (let [r (post-to-heimdall components "refresh-auth-token" (select-keys token-pair [:refresh-token]))]
+    (if (= 201 (:status r))
+      (send-outbound! ch {:kixi.comms.message/type "refresh-response"
+                          :kixi.comms.auth/token-pair (:token-pair (transit-decode (:body r)))})
+      (send-outbound! ch {:kixi.comms.message/type "refresh-response"
+                          :kixi.comms.auth/error (:body r)}))))
+
+(defmethod handle-message
   :default
   [_ msg _]
-  (log/error "Received an unknown message:" (:type msg) msg))
+  (log/error "Received an unknown message:"
+             (:kixi.comms.message/type msg) msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection Handling
@@ -121,8 +154,9 @@
           msg)
         result
         (case (:kixi.comms.message/type msg)
-          "ping" pre-process
-          (s/conform :kixi.comms.message/message pre-process))]
+          "command" (s/conform :kixi.comms.message/message pre-process)
+          "query"   (s/conform :kixi.comms.message/message pre-process)
+          pre-process)]
     [pre-process result]))
 
 (defn ws-handler [request]
@@ -141,31 +175,15 @@
                                (println "Exception thrown:" e)
                                (send-outbound! channel {:error (str e) :original %})))))))
 
-(defn post-to-heimdall
-  [{:keys [body] :as req} path]
-  (let [params (transit-decode-bytes body)
-        {:keys [host port]} (get-in req [:directory :heimdall])
-        heimdall-url (str "http://" host ":" port "/" path)
-        r (http/post heimdall-url
-                     {:content-type :json
-                      :accept :json
-                      :throw-exceptions false
-                      :as :json
-                      :form-params params})]
-    (if (= 201 (:status r))
-      (update r :body transit-encode)
-      {:status (:status r)
-       :body (transit-encode {:error (:body r)})})))
-
 (defn signup
   "forward signup call to heimdall"
   [req]
-  (post-to-heimdall req "user"))
+  (post-to-heimdall req "user" (:body req)))
 
 (defn login
   "forward login to heimdall and return tokens"
   [req]
-  (post-to-heimdall req "create-auth-token"))
+  (post-to-heimdall req "create-auth-token" (:body req)))
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
