@@ -1,5 +1,7 @@
 {:comms {:kafka {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                                  :production "master.mesos"}
+                 :zk-path #profile {:development "/"
+                                    :production "/dcos-service-kafka/"}
                  :port 2181}}
  :connections {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                                :production "master.mesos"}
