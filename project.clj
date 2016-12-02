@@ -5,6 +5,7 @@
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/timbre "4.7.4"]
                  [com.cognitect/transit-clj "0.8.290"]
+                 [javax.servlet/javax.servlet-api "3.1.0"]
                  [clj-time "0.11.0"]
                  [http-kit "2.1.19"]
                  [ring-cors "0.1.8"]

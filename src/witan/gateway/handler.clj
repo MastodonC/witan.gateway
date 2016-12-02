@@ -5,12 +5,14 @@
             [witan.gateway.protocols :as p]
             [clojure.core.async :as async :refer [chan go go-loop put! <!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
+            [org.httpkit.client :as httpk-client]
             [clj-time.core :as t]
             [clj-time.format :as tf]
             [clj-http.client :as http]
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
-            [cognitect.transit :as tr])
+            [cognitect.transit :as tr]
+            [clojure.java.io :as io])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.httpkit.BytesInputStream]))
 
@@ -78,6 +80,26 @@
        (update r :body transit-encode)
        {:status (:status r)
         :body (transit-encode {:error (:body r)})}))))
+
+(defn post-multipart-to-datastore
+  [{:keys [content-type components multipart-params headers] :as req} path]
+  (let [{:keys [host port]} (get-in components [:directory :datastore])
+        datastore-url (str "http://" host ":" port "/" path)
+        payload {:multipart (mapv (fn [[name v]]
+                                    {:name name
+                                     :content (if (map? v)
+                                                (:stream v)
+                                                v)}) multipart-params)
+                 :headers (select-keys headers
+                                       ["file-size"
+                                        "user-id"
+                                        "user-groups"])
+                 :throw-exceptions false}
+        r @(httpk-client/post datastore-url payload)]
+    (if (= 201 (:status r))
+      {:status (:status r)}
+      {:status (:status r)
+       :body (transit-encode {:error (:body r)})})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
@@ -185,8 +207,15 @@
   [req]
   (post-to-heimdall req "create-auth-token" (:body req)))
 
+(defn upload
+  [req]
+  (if (clojure.string/includes? (:content-type req) "multipart/form-data")
+    (post-multipart-to-datastore req "file")
+    {:status 400}))
+
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/health" [] (str "hello"))
   (POST "/signup" req (signup req))
-  (POST "/login" req (login req)))
+  (POST "/login" req (login req))
+  (POST "/upload" req (upload req)))

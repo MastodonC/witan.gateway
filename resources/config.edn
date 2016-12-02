@@ -16,6 +16,10 @@
              :heimdall #profile {:development {:host "127.0.0.1"
                                                :port 3002}
                                  :production {:host "heimdall.marathon.mesos"
-                                              :port 10010}}}
+                                              :port 10010}}
+             :datastore #profile {:development {:host "localhost"
+                                                :port 8080}
+                                  :production {:host "kixi.datastore.marathon.mesos"
+                                               :port 8080}}}
  :log {:level #profile {:development :info
                         :production :info}}}
