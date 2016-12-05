@@ -5,12 +5,15 @@
             [witan.gateway.protocols :as p]
             [clojure.core.async :as async :refer [chan go go-loop put! <!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
+            [org.httpkit.client :as httpk-client]
             [clj-time.core :as t]
             [clj-time.format :as tf]
             [clj-http.client :as http]
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
-            [cognitect.transit :as tr])
+            [cognitect.transit :as tr]
+            [cheshire.core :as json]
+            [clojure.java.io :as io])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.httpkit.BytesInputStream]))
 
@@ -77,7 +80,26 @@
      (if (= 201 (:status r))
        (update r :body transit-encode)
        {:status (:status r)
-        :body (transit-encode {:error (:body r)})}))))
+        :body (transit-encode {:witan.gateway/error (:body r)})}))))
+
+(defn post-multipart-to-datastore
+  [{:keys [content-type components multipart-params headers body] :as req} path]
+  (let [{:keys [host port]} (get-in components [:directory :datastore])
+        datastore-url (str "http://" host ":" port "/" path)
+        payload {:body body
+                 :headers (merge (select-keys headers
+                                              ["file-size"
+                                               "user-id"
+                                               "user-groups"])
+                                 {"Content-Type" content-type})
+                 :throw-exceptions false}
+        r @(httpk-client/post datastore-url payload)]
+    (cond
+      (= 201 (:status r)) {:status (:status r)}
+      (< 500) {:status (:status r)
+               :body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
+      :else {:status (:status r)
+             :body (transit-encode {:witan.gateway/error :upload-failed})})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
@@ -169,11 +191,11 @@
                                    [cleaned result] (conform raw-msg)]
                                (if-not (= result :clojure.spec/invalid)
                                  (handle-message channel result components)
-                                 (send-outbound! channel {:error (s/explain-data :kixi.comms.message/message cleaned)
+                                 (send-outbound! channel {:witan.gateway/error (s/explain-data :kixi.comms.message/message cleaned)
                                                           :original raw-msg})))
                              (catch Exception e
                                (println "Exception thrown:" e)
-                               (send-outbound! channel {:error (str e) :original %})))))))
+                               (send-outbound! channel {:witan.gateway/error (str e) :original %})))))))
 
 (defn signup
   "forward signup call to heimdall"
@@ -185,8 +207,15 @@
   [req]
   (post-to-heimdall req "create-auth-token" (:body req)))
 
+(defn upload
+  [req]
+  (if (clojure.string/includes? (:content-type req) "multipart/form-data")
+    (post-multipart-to-datastore req "file")
+    {:status 400}))
+
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/health" [] (str "hello"))
   (POST "/signup" req (signup req))
-  (POST "/login" req (login req)))
+  (POST "/login" req (login req))
+  (POST "/upload" req (upload req)))
