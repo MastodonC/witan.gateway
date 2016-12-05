@@ -20,6 +20,6 @@
              :datastore #profile {:development {:host "localhost"
                                                 :port 8080}
                                   :production {:host "kixi.datastore.marathon.mesos"
-                                               :port 8080}}}
+                                               :port 18080}}}
  :log {:level #profile {:development :info
                         :production :info}}}
