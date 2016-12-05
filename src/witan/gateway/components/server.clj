@@ -2,13 +2,10 @@
   (:gen-class)
   (:require [org.httpkit.server           :as httpkit]
             [ring.middleware.content-type :refer [wrap-content-type]]
-            [ring.middleware.multipart-params :refer [wrap-multipart-params]]
             [com.stuartsierra.component   :as component]
             [witan.gateway.handler        :refer [app]]
             [taoensso.timbre              :as log]
-            [ring.middleware.cors         :refer [wrap-cors]])
-  (:import [java.io InputStream]
-           [org.apache.commons.io IOUtils]))
+            [ring.middleware.cors         :refer [wrap-cors]]))
 
 (defn wrap-log [handler]
   (fn [request]
@@ -32,11 +29,6 @@
   (fn [req]
     (handler (assoc req :directory directory))))
 
-(defn stream-store
-  []
-  (fn [item]
-    (assoc item :stream (IOUtils/toBufferedInputStream ^InputStream (:stream item)))))
-
 (defrecord HttpKit [port directory]
   component/Lifecycle
   (start [this]
@@ -48,7 +40,6 @@
                                (wrap-components this)
                                (wrap-log)
                                (wrap-content-type "application/json")
-                               (wrap-multipart-params {:store (stream-store)})
                                (wrap-cors :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :post]))
                            {:port port})))
