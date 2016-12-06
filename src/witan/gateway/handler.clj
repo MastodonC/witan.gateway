@@ -93,13 +93,14 @@
                                                "user-groups"])
                                  {"Content-Type" content-type})
                  :throw-exceptions false}
-        r @(httpk-client/post datastore-url payload)]
-    (cond
-      (= 201 (:status r)) {:status (:status r)}
-      (< 500) {:status (:status r)
-               :body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
-      :else {:status (:status r)
-             :body (transit-encode {:witan.gateway/error :upload-failed})})))
+        r @(httpk-client/post datastore-url payload)
+        status (:status r)]
+    (merge {:status status}
+           (cond
+             (= 201 status) {}
+             (= 404 status) {:body (transit-encode {:witan.gateway/error :not-found})}
+             (< 500 status) {:body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
+             :else {:body (transit-encode {:witan.gateway/error :upload-failed})}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
