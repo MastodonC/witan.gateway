@@ -82,6 +82,10 @@
        {:status (:status r)
         :body (transit-encode {:witan.gateway/error (:body r)})}))))
 
+(defn uuid-from-url
+  [url]
+  (subs url (inc (.lastIndexOf url "/"))))
+
 (defn post-multipart-to-datastore
   [{:keys [content-type components multipart-params headers body] :as req} path]
   (let [{:keys [host port]} (get-in components [:directory :datastore])
@@ -97,7 +101,9 @@
         status (:status r)]
     (merge {:status status}
            (cond
-             (= 201 status) {}
+             (= 201 status) {:body (transit-encode {:witan.gateway/uploaded-resource-id
+                                                    (uuid-from-url
+                                                     (get-in r [:headers :location]))})}
              (= 404 status) {:body (transit-encode {:witan.gateway/error :not-found})}
              (< 500 status) {:body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
              :else {:body (transit-encode {:witan.gateway/error :upload-failed})}))))
