@@ -101,11 +101,11 @@
         status (:status r)]
     (merge {:status status}
            (cond
-             (= 201 status) {:body (transit-encode {:witan.gateway/uploaded-resource-id
+             (= status 201) {:body (transit-encode {:witan.gateway/uploaded-resource-id
                                                     (uuid-from-url
                                                      (get-in r [:headers :location]))})}
-             (= 404 status) {:body (transit-encode {:witan.gateway/error :not-found})}
-             (< 500 status) {:body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
+             (= status 404) {:body (transit-encode {:witan.gateway/error :not-found})}
+             (< status 500) {:body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
              :else {:body (transit-encode {:witan.gateway/error :upload-failed})}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
