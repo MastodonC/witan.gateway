@@ -32,21 +32,21 @@
   [])
 
 (defn get-workspaces-by-owner
-  [_ owner]
+  [d _ owner]
   (if (= owner "*")
     (get-workspaces)
     (filter #(= owner (:workspace/owner-id %)) (get-workspaces))))
 
 (defn get-workspace-by-id
-  [_ id]
+  [d _ id]
   (some #(when (= id (:workspace/id %)) %) (get-workspaces)))
 
 (defn get-available-models
-  [_]
+  [d _]
   [])
 
 (defn get-available-functions
-  [_]
+  [d _]
   [])
 
 (defn get-model-by-name-and-version

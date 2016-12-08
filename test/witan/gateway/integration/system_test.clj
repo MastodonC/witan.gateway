@@ -5,6 +5,8 @@
             [gniazdo.core :as ws]
             [kixi.comms :as c]
             [kixi.comms.time :refer [timestamp]]
+            [buddy.core.keys            :as keys]
+            [buddy.sign.jwt             :as jwt]
             [taoensso.timbre :as log]))
 
 
@@ -15,13 +17,34 @@
 (use-fixtures :once (partial cycle-system-fixture system))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
 
+(defn sign
+  [payload]
+  (let [prvk (keys/private-key "./test-resources/auth_privkey.pem" "secret123")]
+    (jwt/sign payload prvk {:alg :rs256})))
+
+(def token
+  {:kixi.comms.auth/token-pair
+   {:auth-token (sign {:id (uuid)
+                       :user-groups {:groups [(uuid)]}})}})
+
+(defn create-command
+  [command-key version id payload]
+  (transit-encode (merge token
+                         {:kixi.comms.message/type "command"
+                          :kixi.comms.command/key command-key
+                          :kixi.comms.command/version version
+                          :kixi.comms.command/id id
+                          :kixi.comms.command/created-at (timestamp)
+                          :kixi.comms.command/payload payload})))
+
 (deftest submit-ping-command-test
   (let [ping? (atom nil)
         id (uuid)]
     (reset! received-fn #(reset! ping? %))
-    (ws/send-msg @wsconn (transit-encode {:kixi.comms.message/type "ping"
-                                          :kixi.comms.ping/id id
-                                          :kixi.comms.ping/created-at (timestamp)}))
+    (ws/send-msg @wsconn (transit-encode (merge token
+                                                {:kixi.comms.message/type "ping"
+                                                 :kixi.comms.ping/id id
+                                                 :kixi.comms.ping/created-at (timestamp)})))
     (wait-for-pred (fn [] @ping?))
     (is @ping?)
     (is (not (contains? @ping? :error)) (pr-str @ping?))
@@ -46,12 +69,7 @@
                                   :kixi.comms.event/key :test/command-received-1
                                   :kixi.comms.event/version "1.0.0"
                                   :kixi.comms.event/payload (assoc payload :bar 456)}))
-    (ws/send-msg @wsconn (transit-encode {:kixi.comms.message/type "command"
-                                          :kixi.comms.command/key :test/command1
-                                          :kixi.comms.command/version "1.0.0"
-                                          :kixi.comms.command/id id
-                                          :kixi.comms.command/created-at (timestamp)
-                                          :kixi.comms.command/payload payload}))
+    (ws/send-msg @wsconn (create-command :test/command1 "1.0.0" id payload))
     (wait-for-pred (fn [] @result))
     (is @result)
     (is (= payload @result))))
@@ -81,12 +99,7 @@
                              (fn [{:keys [kixi.comms.event/payload]}]
                                (reset! result payload)
                                nil))
-    (ws/send-msg @wsconn (transit-encode {:kixi.comms.message/type "command"
-                                          :kixi.comms.command/key :test/command2
-                                          :kixi.comms.command/version "1.0.0"
-                                          :kixi.comms.command/id id
-                                          :kixi.comms.command/created-at (timestamp)
-                                          :kixi.comms.command/payload payload}))
+    (ws/send-msg @wsconn (create-command :test/command2 "1.0.0" id payload))
     (wait-for-pred (fn [] @result))
     (is @result)
     (is (= fixed-payload @result))

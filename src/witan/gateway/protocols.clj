@@ -22,3 +22,8 @@
   (create-table! [this table columns])
   (insert! [this table row args])
   (select [this table where]))
+
+;;;;;;;;;
+
+(defprotocol Authenticate
+  (authenticate [this auth-token]))
