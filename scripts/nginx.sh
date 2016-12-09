@@ -12,6 +12,8 @@ server {
 
         listen 80 default_server;
 
+        client_max_body_size 1G;
+
         error_log /var/log/nginx/error.log;
 
         server_name witan-gateway;
