@@ -14,7 +14,7 @@ server {
 
         client_max_body_size 1000M;
 
-        error_log /dev/stdout error;
+        error_log stderr;
 
         server_name witan-gateway;
 
