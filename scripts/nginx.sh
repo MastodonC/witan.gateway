@@ -14,7 +14,7 @@ server {
 
         client_max_body_size 1000M;
 
-        error_log /var/log/nginx/error.log;
+        error_log /dev/stdout error;
 
         server_name witan-gateway;
 
