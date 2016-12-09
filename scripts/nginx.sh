@@ -12,7 +12,7 @@ server {
 
         listen 80 default_server;
 
-        client_max_body_size 1G;
+        client_max_body_size 1000M;
 
         error_log /var/log/nginx/error.log;
 
