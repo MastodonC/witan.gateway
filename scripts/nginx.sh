@@ -14,7 +14,9 @@ server {
 
         client_max_body_size 1000M;
 
-        error_log /var/log/nginx/error.log;
+        error_log stderr;
+
+        proxy_request_buffering off;
 
         server_name witan-gateway;
 
