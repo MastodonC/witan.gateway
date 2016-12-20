@@ -112,11 +112,11 @@
 ;; Message Handling
 
 (defmulti handle-message
-  (fn [ch msg components] (:kixi.comms.message/type msg)))
+  (fn [ch msg user components] (:kixi.comms.message/type msg)))
 
 (defmethod handle-message
   "query"
-  [ch {:keys [kixi.comms.query/body kixi.comms.query/id]} {:keys [queries]}]
+  [ch {:keys [kixi.comms.query/body kixi.comms.query/id]} user {:keys [queries]}]
   (if-not (vector? body)
     (send-message! ch {:kixi.comms.message/type "query-response"
                        :kixi.comms.query/id id
@@ -134,23 +134,23 @@
               kixi.comms.command/key
               kixi.comms.command/version
               kixi.comms.command/created-at
-              kixi.comms.command/payload] :as command} {:keys [comms connections]}]
+              kixi.comms.command/payload] :as command} user {:keys [comms connections]}]
   (p/add-receipt! connections (partial dispatch-event! ch id) id)
   (log/info "Forwarding command" key version id)
-  (comms/send-command! comms key version payload {:id id
-                                                  :created-at created-at}))
+  (comms/send-command! comms key version user payload {:id id
+                                                       :created-at created-at}))
 
 (defmethod handle-message
   "ping"
-  [ch {:keys [kixi.comms.ping/id]} {:keys [comms connections]}]
+  [ch {:keys [kixi.comms.ping/id]} user {:keys [comms connections]}]
   (log/trace "Received ping!")
-  (send-outbound! ch {:kixi.comms.message/type "pong"
-                      :kixi.comms.pong/id id
-                      :kixi.comms.pong/created-at (timestamp)}))
+  (send-outbound! ch (merge {:kixi.comms.message/type "pong"
+                             :kixi.comms.pong/created-at (timestamp)}
+                            (when id {:kixi.comms.pong/id id}))))
 
 (defmethod handle-message
   "refresh"
-  [ch {:keys [kixi.comms.auth/token-pair]} components]
+  [ch {:keys [kixi.comms.auth/token-pair]} user components]
   (let [r (post-to-heimdall components "refresh-auth-token" (select-keys token-pair [:refresh-token]))]
     (if (= 201 (:status r))
       (send-outbound! ch {:kixi.comms.message/type "refresh-response"
@@ -160,12 +160,22 @@
 
 (defmethod handle-message
   :default
-  [_ msg _]
+  [_ msg _ _]
   (log/error "Received an unknown message:"
              (:kixi.comms.message/type msg) msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection Handling
+
+(defn error-message
+  [original error-key error-str]
+  (let [error-payload {:witan.gateway/error error-key}
+        error-payload (if-not (clojure.string/blank? error-str)
+                        (assoc error-payload :witan.gateway/error-str (str error-str))
+                        error-payload)]
+    {:kixi.comms.message/type "error"
+     :kixi.comms.message/original original
+     :kixi.comms.message/payload error-payload}))
 
 (defn disconnect! [cm channel status]
   (p/remove-connection! cm channel))
@@ -188,6 +198,11 @@
           pre-process)]
     [pre-process result]))
 
+(defn valid-auth?
+  [auth {:keys [kixi.comms.auth/token-pair]}]
+  (let [{:keys [auth-token]} token-pair]
+    (p/authenticate auth auth-token)))
+
 (defn ws-handler [request]
   (let [components (:components request)]
     (with-channel request channel
@@ -195,14 +210,22 @@
       (on-close channel (partial disconnect! (:connections components) channel))
       (on-receive channel #(try
                              (let [raw-msg (transit-decode %)
-                                   [cleaned result] (conform raw-msg)]
-                               (if-not (= result :clojure.spec/invalid)
-                                 (handle-message channel result components)
-                                 (send-outbound! channel {:witan.gateway/error (s/explain-data :kixi.comms.message/message cleaned)
-                                                          :original raw-msg})))
+                                   user-payload (valid-auth? (:auth components) raw-msg)]
+                               (if user-payload
+                                 (let [[cleaned result] (conform raw-msg)]
+                                   (if-not (= result :clojure.spec/invalid)
+                                     (handle-message channel result user-payload components)
+                                     (send-outbound!
+                                      channel
+                                      (error-message raw-msg :invalid-msg (s/explain-data :kixi.comms.message/message cleaned)))))
+                                 (send-outbound!
+                                  channel
+                                  (error-message raw-msg :unauthenticated nil))))
                              (catch Exception e
                                (println "Exception thrown:" e)
-                               (send-outbound! channel {:witan.gateway/error (str e) :original %})))))))
+                               (send-outbound!
+                                channel
+                                (error-message % :server-error (str e)))))))))
 
 (defn signup
   "forward signup call to heimdall"

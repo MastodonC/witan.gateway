@@ -6,47 +6,25 @@
             [graph-router.core          :refer [with dispatch]]
             ;;
             [witan.gateway.queries.data-acquisition :as qda]
-            [witan.gateway.queries.workspace :as qw]))
+            [witan.gateway.queries.workspace :as qw]
+            [witan.gateway.queries.datastore :as qds]))
 
-(def test-query-fields
-  [:foo/bar :hello/world])
+(def function-graph
+  {:workspace/list-by-owner [qw/get-workspaces-by-owner qw/workspace-fields]
+   :workspace/by-id         [qw/get-workspace-by-id     qw/workspace-fields]
 
-(defn test-query
-  [_]
-  {:foo/bar "Hello"
-   :hello/world "World"})
+   :workspace/available-models          [qw/get-available-models          qw/model-fields]
+   :workspace/model-by-name-and-version [qw/get-model-by-name-and-version qw/model-fields]
+
+   :data-acquisition/requests-by-requester [qda/requests-by-requester qda/request-fields]
+   :data-acquisition/request-by-id         [qda/request-by-id         qda/request-fields]
+
+   :datastore/files-by-author [qds/files-by-author qds/data-fields]})
 
 (defn make-graph
   [service-map]
-  {;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; Workspaces
-   ;; - workspaces by owner
-   (with :workspace/list-by-owner qw/get-workspaces-by-owner)
-   qw/workspace-fields
-   ;; - workspace by id
-   (with :workspace/by-id qw/get-workspace-by-id)
-   qw/workspace-fields
-   ;; - functions
-   (with :workspace/available-functions qw/get-available-functions)
-   qw/function-fields
-   ;; - models
-   (with :workspace/available-models qw/get-available-models)
-   qw/model-fields
-   (with :workspace/model-by-name-and-version qw/get-model-by-name-and-version)
-   qw/model-fields
-
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; Data Acquisition
-   (with :data-acquisition/requests-by-requester qda/requests-by-requester)
-   qda/request-fields
-
-   (with :data-acquisition/request-by-id qda/request-by-id)
-   qda/request-fields
-
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; Test
-   (with :test-query test-query)
-   test-query-fields})
+  (reduce-kv (fn [a k [fnc fields]]
+               (assoc a (with k (partial fnc service-map)) fields)) {} function-graph))
 
 (defn fix-list-entries
   [m]
@@ -55,7 +33,7 @@
 (defrecord QueryRouter [service-map]
   RouteQuery
   (route-query [{:keys [graph]} payload]
-    (log/info "Query:" payload)
+    (log/info "Query:" payload service-map)
     (if (vector? (-> payload first first))
       (dispatch graph (fix-list-entries payload))
       (dispatch graph payload)))

@@ -20,9 +20,9 @@
    :kixi.data-acquisition.request-for-data/message])
 
 (defn requests-by-requester
-  [_ id]
+  [d _ id]
   [])
 
 (defn request-by-id
-  [_ id]
+  [d _ id]
   {})
