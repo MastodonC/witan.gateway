@@ -30,6 +30,8 @@ ADD target/witan.gateway-standalone.jar /srv/witan.gateway.jar
 ADD scripts/run.sh /etc/service/gateway/run
 ADD scripts/nginx.sh /etc/service/nginx/run
 
+ADD scripts/download-secrets.sh /root/download-secrets.sh
+
 EXPOSE 30015
 EXPOSE 80
 
