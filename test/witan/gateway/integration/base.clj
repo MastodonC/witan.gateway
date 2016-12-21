@@ -4,9 +4,16 @@
             [gniazdo.core :as ws]
             [witan.gateway.handler :refer [transit-encode transit-decode]]
             [taoensso.timbre :as log]
+            [buddy.core.keys            :as keys]
+            [buddy.sign.jwt             :as jwt]
             [clojure.core.async :refer :all]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
+
+(defn sign
+  [payload]
+  (let [prvk (keys/private-key "./test-resources/auth_privkey.pem" "secret123")]
+    (jwt/sign payload prvk {:alg :rs256})))
 
 (defn cycle-system-fixture
   [a all-tests]
