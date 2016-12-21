@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
+            [clj-time.coerce            :as ct]
             [clojure.spec               :as s]
             [kixi.comms                 :as c]
             [buddy.core.keys            :as keys]
@@ -13,9 +14,12 @@
   (authenticate [this auth-token]
     (try
       (let [pk (:loaded-pubkey this)
-            auth-payload (jwt/unsign auth-token pk {:alg :rs256})]
-        {:kixi.user/id (:id auth-payload)
-         :kixi.user/groups (get-in auth-payload [:user-groups :groups])})
+            auth-payload (jwt/unsign auth-token pk {:alg :rs256})
+            expiry (-> auth-payload :exp ct/from-long)]
+        (if (t/before? (t/now) expiry)
+          {:kixi.user/id (:id auth-payload)
+           :kixi.user/groups (get-in auth-payload [:user-groups :groups])}
+          (throw (Exception. "Auth token has expired"))))
       (catch Exception e (log/warn e "Failed to unsign an auth token:"))))
 
   component/Lifecycle
