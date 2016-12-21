@@ -26,4 +26,4 @@
 ;;;;;;;;;
 
 (defprotocol Authenticate
-  (authenticate [this auth-token]))
+  (authenticate [this time auth-token]))

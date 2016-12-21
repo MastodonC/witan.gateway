@@ -11,12 +11,12 @@
 
 (defrecord Authenticator [pubkey]
   Authenticate
-  (authenticate [this auth-token]
+  (authenticate [this time auth-token]
     (try
       (let [pk (:loaded-pubkey this)
             auth-payload (jwt/unsign auth-token pk {:alg :rs256})
             expiry (-> auth-payload :exp ct/from-long)]
-        (if (t/before? (t/now) expiry)
+        (if (t/before? time expiry)
           {:kixi.user/id (:id auth-payload)
            :kixi.user/groups (get-in auth-payload [:user-groups :groups])}
           (throw (Exception. "Auth token has expired"))))
