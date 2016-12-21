@@ -21,13 +21,13 @@
            (->Authenticator "./test-resources/auth_pubkey.pem")))
 
 (deftest auth-pass
-  (is (p/authenticate auth valid-auth-token)))
+  (is (p/authenticate auth (t/now) valid-auth-token)))
 
 (deftest auth-fail-tampered
   (let [tampered-token (apply str (update (vec valid-auth-token)
                                           (long (rand (count valid-auth-token)))
                                           #(char (inc (int %)))))] ;; change one random character
-    (is (not (p/authenticate auth tampered-token)))))
+    (is (not (p/authenticate auth (t/now) tampered-token)))))
 
 (deftest auth-fail-expired
-  (is (not (p/authenticate auth expired-auth-token))))
+  (is (not (p/authenticate auth (t/now) expired-auth-token))))
