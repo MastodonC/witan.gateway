@@ -31,7 +31,9 @@ ADD scripts/run.sh /etc/service/gateway/run
 ADD scripts/nginx.sh /etc/service/nginx/run
 
 ARG SECRETS_BUCKET
+ARG AWS_REGION
 ENV SECRETS_BUCKET=$SECRETS_BUCKET
+ENV AWS_REGION=$AWS_REGION
 
 ADD scripts/download-secrets.sh /root/download-secrets.sh
 
