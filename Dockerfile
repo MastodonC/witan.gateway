@@ -3,7 +3,7 @@ MAINTAINER Antony Woods <antony@mastodonc.com>
 
 CMD ["/sbin/my_init"]
 
-RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-get update && apt-get install -y software-properties-common python2.7 unzip
 
 # Install Java
 RUN add-apt-repository -y ppa:webupd8team/java \
