@@ -31,7 +31,7 @@ deployment:
     commands:
       - lein clean
       - lein uberjar
-      - docker build -t mastodonc/witan.gateway .
+      - docker build -t mastodonc/witan.gateway --build-arg SECRETS_BUCKET=$SECRETS_BUCKET .
       - docker tag -f mastodonc/witan.gateway mastodonc/witan.gateway:latest
       - docker tag -f mastodonc/witan.gateway mastodonc/witan.gateway:git-$(echo $CIRCLE_SHA1 | cut -c1-12)
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
