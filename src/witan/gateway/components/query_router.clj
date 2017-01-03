@@ -34,9 +34,12 @@
   RouteQuery
   (route-query [{:keys [graph]} payload]
     (log/info "Query:" payload service-map)
-    (if (vector? (-> payload first first))
-      (dispatch graph (fix-list-entries payload))
-      (dispatch graph payload)))
+    (try
+      (if (vector? (-> payload first first))
+        (dispatch graph (fix-list-entries payload))
+        (dispatch graph payload))
+      (catch IllegalArgumentException e
+        (throw (Exception. (str "The specified query could not be processed: " payload))))))
 
   component/Lifecycle
   (start [component]
