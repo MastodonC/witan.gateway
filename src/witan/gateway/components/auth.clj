@@ -15,7 +15,7 @@
       (let [pk (:loaded-pubkey this)
             auth-payload (jwt/unsign auth-token pk {:alg :rs256})]
         {:kixi.user/id (:id auth-payload)
-         :kixi.user/groups (get-in auth-payload [:user-groups :groups])})
+         :kixi.user/groups (vec (get-in auth-payload [:user-groups :groups]))})
       (catch Exception e (log/warn e "Failed to unsign an auth token:"))))
 
   component/Lifecycle

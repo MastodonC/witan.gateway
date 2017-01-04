@@ -1,6 +1,5 @@
 (ns witan.gateway.queries.workspace
-  (:require [graph-router.core :as gr]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
             [clj-time.format :as tf]))
 
 (defn dt->str
@@ -14,7 +13,7 @@
    :workspace/id
    :workspace/owner-name
    :workspace/owner-id
-   (gr/with :workspace/modified (dt->str :workspace/modified))
+   :workspace/modified
    :workspace/description])
 
 (def model-fields
@@ -32,21 +31,21 @@
   [])
 
 (defn get-workspaces-by-owner
-  [d _ owner]
+  [u d owner]
   (if (= owner "*")
     (get-workspaces)
     (filter #(= owner (:workspace/owner-id %)) (get-workspaces))))
 
 (defn get-workspace-by-id
-  [d _ id]
+  [u d id]
   (some #(when (= id (:workspace/id %)) %) (get-workspaces)))
 
 (defn get-available-models
-  [d _]
+  [u d]
   [])
 
 (defn get-available-functions
-  [d _]
+  [u d]
   [])
 
 (defn get-model-by-name-and-version

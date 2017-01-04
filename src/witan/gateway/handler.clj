@@ -121,7 +121,7 @@
     (send-message! ch {:kixi.comms.message/type "query-response"
                        :kixi.comms.query/id id
                        :kixi.comms.query/error "Query needs to be a vector"})
-    (let [results (mapv (partial p/route-query queries) body)]
+    (let [results (mapv (partial p/route-query queries user) body)]
       (send-message! ch {:kixi.comms.message/type "query-response"
                          :kixi.comms.query/id id
                          :kixi.comms.query/results results}))))
