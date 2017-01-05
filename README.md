@@ -2,8 +2,6 @@
 
 CQRS HTTP gateway
 
-## Usage
-
 ### Production
 ```
 lein uberjar
