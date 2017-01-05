@@ -18,4 +18,4 @@ lein run -m witan.gateway.system development
 
 ## License
 
-Copyright © MastodonC
+Copyright © MastodonC Ltd
