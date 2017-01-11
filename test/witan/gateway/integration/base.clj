@@ -8,6 +8,9 @@
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
+(def wait-tries (Integer/parseInt (env :wait-tries "65")))
+(def wait-ms (Integer/parseInt (env :wait-ms "500")))
+
 (defn cycle-system-fixture
   [a all-tests]
   (reset! a (repl/go))
@@ -41,11 +44,9 @@
 
 (defn wait-for-pred
   ([p]
-   (let [wait-tries (or (some-> (env :wait-tries) (Integer/valueOf)) 65)]
-     (wait-for-pred p wait-tries)))
+   (wait-for-pred p wait-tries))
   ([p tries]
-   (let [wait-ms (or (some-> (env :wait-ms) (Integer/valueOf)) 500)]
-     (wait-for-pred p tries wait-ms)))
+   (wait-for-pred p tries wait-ms))
   ([p tries ms]
    (log/info "Waiting for predicate -" tries "x" ms)
    (loop [try tries]

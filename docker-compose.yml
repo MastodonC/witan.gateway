@@ -8,3 +8,37 @@ kafka:
           - zookeeper:zookeeper
         ports:
           - "9092:9092"
+datastore:
+        image: 'mastodonc/kixi.datastore:latest'
+        #use volumes_from until we upgrade and get depends_on
+        ports:
+          - "8080:8080"
+        volumes_from:
+          - "zookeeper"
+          - "kafka"
+          - "influxdb"
+          - "elasticsearch"
+        links:
+          - zookeeper:zookeeper
+          - elasticsearch:elasticsearch
+          - influxdb:influxdb
+        environment:
+          - CONFIG_PROFILE=local
+          - ZOOKEEPER=zookeeper
+          - ELASTICSEARCH=elasticsearch
+          - INFLUXDB=influxdb
+influxdb:
+        image: 'tutum/influxdb:0.13'
+        environment: 
+          - ADMIN_USER="root"
+          - INFLUXDB_INIT_PWD="somepassword"
+          - PRE_CREATE_DB="metrics"
+        ports:
+          - "8086:8086"
+          - "8083:8083"
+elasticsearch:
+        image: 'elasticsearch:2.4.1'
+        ports:
+          - "9200:9200"
+          - "9300:9300"
+        

@@ -18,7 +18,7 @@
    :data-acquisition/requests-by-requester qda/requests-by-requester
    :data-acquisition/request-by-id         qda/request-by-id
 
-   :datastore/metadata-with-activities qds/metadata-with-activities })
+   :datastore/metadata-with-activities qds/metadata-with-activities})
 
 (defn blob->function
   [functions fb & params]
@@ -27,7 +27,7 @@
                (vector fb))
         f (first blob)]
     (fn []
-      {f ((apply partial (get functions f) (concat params (rest blob))))})))
+      ((apply partial (get functions f) (concat params (rest blob)))))))
 
 (defrecord QueryRouter [service-map]
   RouteQuery

@@ -24,8 +24,8 @@
   "List file metadata with *this* activities set."
   [{:keys [kixi.user/id kixi.user/groups]} d activities]
   (let [url (datastore-url d "/metadata")
-        resp @(http/get url {:query-params (merge (zipmap (repeat :activity)
-                                                          (map encode-kw activities))
+        resp @(http/get url {:query-params (merge {:activity
+                                                   (mapv encode-kw activities)}
                                                   #_(when index
                                                       {:index index})
                                                   #_(when count
