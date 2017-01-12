@@ -3,7 +3,7 @@ MAINTAINER Antony Woods <antony@mastodonc.com>
 
 CMD ["/sbin/my_init"]
 
-RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-get update && apt-get install -y software-properties-common python2.7 unzip
 
 # Install Java
 RUN add-apt-repository -y ppa:webupd8team/java \
@@ -29,6 +29,13 @@ ADD target/witan.gateway-standalone.jar /srv/witan.gateway.jar
 
 ADD scripts/run.sh /etc/service/gateway/run
 ADD scripts/nginx.sh /etc/service/nginx/run
+
+ARG SECRETS_BUCKET
+ARG AWS_REGION
+ENV SECRETS_BUCKET=$SECRETS_BUCKET
+ENV AWS_REGION=$AWS_REGION
+
+ADD scripts/download-secrets.sh /root/download-secrets.sh
 
 EXPOSE 30015
 EXPOSE 80

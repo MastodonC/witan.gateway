@@ -201,7 +201,7 @@
 (defn valid-auth?
   [auth {:keys [kixi.comms.auth/token-pair]}]
   (let [{:keys [auth-token]} token-pair]
-    (p/authenticate auth auth-token)))
+    (p/authenticate auth (t/now) auth-token)))
 
 (defn ws-handler [request]
   (let [components (:components request)]

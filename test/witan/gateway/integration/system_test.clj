@@ -5,8 +5,8 @@
             [gniazdo.core :as ws]
             [kixi.comms :as c]
             [kixi.comms.time :refer [timestamp]]
-            [buddy.core.keys            :as keys]
-            [buddy.sign.jwt             :as jwt]
+            [clj-time.core :as t]
+            [clj-time.coerce :as ct]
             [taoensso.timbre :as log]))
 
 
@@ -17,14 +17,10 @@
 (use-fixtures :once (partial cycle-system-fixture system))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
 
-(defn sign
-  [payload]
-  (let [prvk (keys/private-key "./test-resources/auth_privkey.pem" "secret123")]
-    (jwt/sign payload prvk {:alg :rs256})))
-
 (def token
   {:kixi.comms.auth/token-pair
-   {:auth-token (sign {:id (uuid)
+   {:auth-token (sign {:exp (ct/to-long (t/plus (t/now) (t/hours 1)))
+                       :id (uuid)
                        :user-groups {:groups [(uuid)]}})}})
 
 (defn create-command
@@ -48,7 +44,7 @@
     (wait-for-pred (fn [] @ping?))
     (is @ping?)
     (is (not (contains? @ping? :error)) (pr-str @ping?))
-    (is (= "pong" (:kixi.comms.message/type @ping?)))
+    (is (= "pong" (:kixi.comms.message/type @ping?)) (pr-str @ping?))
     (is (= id (:kixi.comms.pong/id @ping?)))))
 
 

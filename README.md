@@ -2,8 +2,6 @@
 
 CQRS HTTP gateway
 
-## Usage
-
 ### Production
 ```
 lein uberjar
@@ -18,4 +16,4 @@ lein run -m witan.gateway.system development
 
 ## License
 
-Copyright © MastodonC
+Copyright © MastodonC Ltd
