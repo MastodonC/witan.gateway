@@ -17,11 +17,6 @@
 (use-fixtures :once (partial cycle-system-fixture system))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
 
-(defn sign
-  [payload]
-  (let [prvk (keys/private-key "./test-resources/auth_privkey.pem" "secret123")]
-    (jwt/sign payload prvk {:alg :rs256})))
-
 (def token
   {:kixi.comms.auth/token-pair
    {:auth-token (sign {:id (uuid)
