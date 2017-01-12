@@ -24,7 +24,7 @@
   },
   "id": "witan-gateway",
   "constraints": [["hostname", "UNIQUE"]],
-  "instances": 1,
+  "instances": @@INSTANCE_COUNT@@,
   "cpus": 1,
   "mem": 2048,
   "healthChecks": [{
