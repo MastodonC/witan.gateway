@@ -3,49 +3,48 @@
             [taoensso.timbre            :as log]
             [witan.gateway.protocols    :as p :refer [RouteQuery]]
             [clj-http.client            :as client]
-            [graph-router.core          :refer [with dispatch]]
             ;;
             [witan.gateway.queries.data-acquisition :as qda]
             [witan.gateway.queries.workspace :as qw]
             [witan.gateway.queries.datastore :as qds]))
 
-(def function-graph
-  {:workspace/list-by-owner [qw/get-workspaces-by-owner qw/workspace-fields]
-   :workspace/by-id         [qw/get-workspace-by-id     qw/workspace-fields]
+(def functions
+  {:workspace/list-by-owner qw/get-workspaces-by-owner
+   :workspace/by-id         qw/get-workspace-by-id
 
-   :workspace/available-models          [qw/get-available-models          qw/model-fields]
-   :workspace/model-by-name-and-version [qw/get-model-by-name-and-version qw/model-fields]
+   :workspace/available-models          qw/get-available-models
+   :workspace/model-by-name-and-version qw/get-model-by-name-and-version
 
-   :data-acquisition/requests-by-requester [qda/requests-by-requester qda/request-fields]
-   :data-acquisition/request-by-id         [qda/request-by-id         qda/request-fields]
+   :data-acquisition/requests-by-requester qda/requests-by-requester
+   :data-acquisition/request-by-id         qda/request-by-id
 
-   :datastore/files-by-author [qds/files-by-author qds/data-fields]})
+   :datastore/metadata-with-activities qds/metadata-with-activities})
 
-(defn make-graph
-  [service-map]
-  (reduce-kv (fn [a k [fnc fields]]
-               (assoc a (with k (partial fnc service-map)) fields)) {} function-graph))
-
-(defn fix-list-entries
-  [m]
-  (apply hash-map (update-in (first m) [0] #(apply list %))))
+(defn blob->function
+  [functions fb & params]
+  (let [blob (if (vector? fb)
+               fb
+               (vector fb))
+        f (first blob)]
+    (fn []
+      {f ((apply partial (get functions f) (concat params (rest blob))))})))
 
 (defrecord QueryRouter [service-map]
   RouteQuery
-  (route-query [{:keys [graph]} payload]
-    (log/info "Query:" payload service-map)
-    (if (vector? (-> payload first first))
-      (dispatch graph (fix-list-entries payload))
-      (dispatch graph payload)))
+  (route-query [{:keys [graph]} user payload]
+    (log/info "Query:" payload)
+    (let [function-blob (first payload)
+          function (blob->function functions function-blob user service-map)]
+      (function)))
 
   component/Lifecycle
   (start [component]
     (log/info "Starting Query Router")
-    (assoc component :graph (make-graph service-map)))
+    component)
 
   (stop [component]
     (log/info "Stopping Query Router")
-    (dissoc component :graph)))
+    component))
 
 (defn new-query-router [service-map]
   (->QueryRouter service-map))

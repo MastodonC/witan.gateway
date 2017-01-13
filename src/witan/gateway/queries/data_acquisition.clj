@@ -1,5 +1,4 @@
-(ns witan.gateway.queries.data-acquisition
-  (:require [graph-router.core :as gr]))
+(ns witan.gateway.queries.data-acquisition)
 
 (def group-fields
   [:kixi.group/id :kixi.group/email :kixi.group/type :kixi.group/name])
@@ -20,9 +19,9 @@
    :kixi.data-acquisition.request-for-data/message])
 
 (defn requests-by-requester
-  [d _ id]
+  [u d id]
   [])
 
 (defn request-by-id
-  [d _ id]
+  [u d id]
   {})

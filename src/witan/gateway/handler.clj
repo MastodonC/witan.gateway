@@ -27,7 +27,7 @@
 (defn transit-decode-bytes [in]
   (let [reader (tr/reader in transit-encoding-level)]
     (tr/read reader)))
-(defn transit-decode [s]
+(defn transit-decode [^String s]
   (let [sbytes (.getBytes s)
         in (ByteArrayInputStream. sbytes)
         reader (tr/reader in transit-encoding-level)]
@@ -83,7 +83,7 @@
         :body (transit-encode {:witan.gateway/error (:body r)})}))))
 
 (defn uuid-from-url
-  [url]
+  [^String url]
   (subs url (inc (.lastIndexOf url "/"))))
 
 (defn post-multipart-to-datastore
@@ -121,7 +121,7 @@
     (send-message! ch {:kixi.comms.message/type "query-response"
                        :kixi.comms.query/id id
                        :kixi.comms.query/error "Query needs to be a vector"})
-    (let [results (mapv (partial p/route-query queries) body)]
+    (let [results (mapv (partial p/route-query queries user) body)]
       (send-message! ch {:kixi.comms.message/type "query-response"
                          :kixi.comms.query/id id
                          :kixi.comms.query/results results}))))
@@ -170,7 +170,7 @@
 (defn error-message
   [original error-key error-str]
   (let [error-payload {:witan.gateway/error error-key}
-        error-payload (if-not (clojure.string/blank? error-str)
+        error-payload (if-not (empty? error-str)
                         (assoc error-payload :witan.gateway/error-str (str error-str))
                         error-payload)]
     {:kixi.comms.message/type "error"
@@ -217,7 +217,7 @@
                                      (handle-message channel result user-payload components)
                                      (send-outbound!
                                       channel
-                                      (error-message raw-msg :invalid-msg (s/explain-data :kixi.comms.message/message cleaned)))))
+                                      (error-message raw-msg :invalid-msg (s/explain-data :kixi.comms.message/message raw-msg)))))
                                  (send-outbound!
                                   channel
                                   (error-message raw-msg :unauthenticated nil))))

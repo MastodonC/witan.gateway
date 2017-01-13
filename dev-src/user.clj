@@ -2,6 +2,7 @@
   (:require
    [com.stuartsierra.component :as component]
    [clojure.tools.namespace.repl :refer (refresh refresh-all)]
+   [environ.core :refer [env]]
    [witan.gateway.system :refer (new-system)]))
 
 (def system nil)
@@ -10,7 +11,7 @@
   "Constructs the current development system."
   []
   (alter-var-root #'system
-                  (constantly (new-system :development))))
+                  (constantly (new-system (keyword (env :system-profile "development"))))))
 
 (defn start
   "Starts the current development system."
