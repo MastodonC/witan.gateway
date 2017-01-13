@@ -32,6 +32,7 @@
                                                       {:count count}))
                              :headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]
-    (when (= 200 (:status resp))
-      (let [contents (json/parse-string (:body resp) keyword)]
-        contents))))
+    (update resp
+            :body
+            #(when % 
+               (json/parse-string % keyword)))))

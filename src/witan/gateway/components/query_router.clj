@@ -27,13 +27,13 @@
                (vector fb))
         f (first blob)]
     (fn []
-      ((apply partial (get functions f) (concat params (rest blob)))))))
+      {f ((apply partial (get functions f) (concat params (rest blob))))})))
 
 (defrecord QueryRouter [service-map]
   RouteQuery
   (route-query [{:keys [graph]} user payload]
     (log/info "Query:" payload)
-    (let [[function-blob fields] (first payload)
+    (let [function-blob (first payload)
           function (blob->function functions function-blob user service-map)]
       (function)))
 
