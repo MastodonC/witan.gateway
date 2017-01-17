@@ -7,4 +7,4 @@ set -o xtrace
 
 export BIND_ADDR="${BIND_ADDR:-$(hostname --ip-address)}"
 export APP_NAME=$(echo "witan.gateway" | sed s/"-"/"_"/g)
-exec java ${PEER_JAVA_OPTS:-} -jar /srv/witan.gateway.jar
+exec java -XX:+HeapDumpOnOutOfMemoryError -XX:+UseG1GC -Xloggc:gc.log -XX:+PrintGCCause -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=3 -XX:GCLogFileSize=2M ${JAVA_OPTS:-} -jar /srv/witan.gateway.jar
