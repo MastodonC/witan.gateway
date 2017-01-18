@@ -24,7 +24,7 @@
 (defrecord QueryRouter [service-map]
   RouteQuery
   (route-query [{:keys [graph]} user [query [params fields]]]
-    (log/info "Query:" query user)
+    (log/info "Query:" query params user)
     (if-let [func (get functions query)]
       {query (apply (partial func
                              user service-map)
