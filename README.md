@@ -1,6 +1,8 @@
 # witan.gateway
 
-CQRS HTTP gateway
+Gateway/BFF for the Kixi infrastructure (aka Witan).
+Uses CQRS.
+Here be dragons.
 
 ### Production
 ```
@@ -10,8 +12,14 @@ java -jar target/witan.gateway-standalone.jar
 
 ### Development
 ```
-docker-compose up -d
-lein run -m witan.gateway.system development
+docker-compose pull
+docker-compose up
+```
+
+To add some user data, you should check out the `kixi.heimdall` project and run
+
+```
+lein seed development
 ```
 
 ## License

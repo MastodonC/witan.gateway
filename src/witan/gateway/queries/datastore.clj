@@ -4,10 +4,11 @@
             [cheshire.core :as json]))
 
 (defn datastore-url
-  [s route]
-  (str "http://"
-       (get-in s [:datastore :host]) ":"
-       (get-in s [:datastore :port]) route))
+  [s & params]
+  (apply str "http://"
+         (get-in s [:datastore :host]) ":"
+         (get-in s [:datastore :port]) "/"
+         (clojure.string/join "/" params)))
 
 (def data-fields
   [:foo :bar])
@@ -20,10 +21,14 @@
 
 ;; kixi.datastore.metadatastore
 
+(defn metadata-by-id
+  [{:keys [kixi.user/id kixi.user/groups]} d id]
+  (let [url (datastore-url d "metadata" id)]))
+
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
   [{:keys [kixi.user/id kixi.user/groups]} d activities]
-  (let [url (datastore-url d "/metadata")
+  (let [url (datastore-url d "metadata")
         resp @(http/get url {:query-params (merge {:activity
                                                    (mapv encode-kw activities)}
                                                   #_(when index
@@ -34,5 +39,5 @@
                                        "user-id" id}})]
     (update resp
             :body
-            #(when % 
+            #(when %
                (json/parse-string % keyword)))))
