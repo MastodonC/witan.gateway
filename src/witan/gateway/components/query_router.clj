@@ -18,24 +18,18 @@
    :data-acquisition/requests-by-requester qda/requests-by-requester
    :data-acquisition/request-by-id         qda/request-by-id
 
-   :datastore/metadata-with-activities qds/metadata-with-activities})
-
-(defn blob->function
-  [functions fb & params]
-  (let [blob (if (vector? fb)
-               fb
-               (vector fb))
-        f (first blob)]
-    (fn []
-      {f ((apply partial (get functions f) (concat params (rest blob))))})))
+   :datastore/metadata-with-activities qds/metadata-with-activities
+   :datastore/metadata-by-id qds/metadata-by-id})
 
 (defrecord QueryRouter [service-map]
   RouteQuery
-  (route-query [{:keys [graph]} user payload]
-    (log/info "Query:" payload)
-    (let [function-blob (first payload)
-          function (blob->function functions function-blob user service-map)]
-      (function)))
+  (route-query [{:keys [graph]} user [query [params fields]]]
+    (log/info "Query:" query user)
+    (if-let [func (get functions query)]
+      {query (apply (partial func
+                             user service-map)
+                    params)}
+      {query {:error "does not exist"}}))
 
   component/Lifecycle
   (start [component]

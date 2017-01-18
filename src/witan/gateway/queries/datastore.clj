@@ -22,8 +22,14 @@
 ;; kixi.datastore.metadatastore
 
 (defn metadata-by-id
-  [{:keys [kixi.user/id kixi.user/groups]} d id]
-  (let [url (datastore-url d "metadata" id)]))
+  [{:keys [kixi.user/id kixi.user/groups]} system-map id]
+  (let [url (datastore-url system-map "metadata" id)
+        resp @(http/get url {:headers {"user-groups" (clojure.string/join "," groups)
+                                       "user-id" id}})]
+    (:body (update resp
+                      :body
+                      #(when %
+                         (json/parse-string % keyword))))))
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
@@ -37,7 +43,7 @@
                                                       {:count count}))
                              :headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]
-    (update resp
-            :body
-            #(when %
-               (json/parse-string % keyword)))))
+    (:body (update resp
+                   :body
+                   #(when %
+                      (json/parse-string % keyword))))))

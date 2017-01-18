@@ -15,7 +15,7 @@
 
 (defn sign
   [payload]
-  (let [prvk (keys/private-key "./test-resources/auth_privkey.pem" "secret123")]
+  (let [prvk (keys/private-key "./test-resources/heimdall-dev_privkey.pem" "test")]
     (jwt/sign payload prvk {:alg :rs256})))
 
 (defn cycle-system-fixture

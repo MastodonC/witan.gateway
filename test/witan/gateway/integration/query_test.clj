@@ -20,13 +20,13 @@
 (def token
   {:kixi.comms.auth/token-pair
    {:auth-token (sign {:id (uuid)
-                       :user-groups {:groups [(uuid)]}})}})
+                       :groups [(uuid)]})}})
 
 (defn send-query
   [qid query-name param-v]
   (ws/send-msg @wsconn (transit-encode (merge token
                                               {:kixi.comms.message/type "query"
-                                               :kixi.comms.query/body [[[[query-name param-v]]]] ;this is clearly mad
+                                               :kixi.comms.query/body {query-name [[param-v] :fields]}
                                                :kixi.comms.query/id qid}))))
 
 (deftest metadata-activites-returns-nothing-when-there-is-nothing
@@ -38,5 +38,5 @@
     (is (= {:kixi.comms.message/type "query-response",
             :kixi.comms.query/id qid
             :kixi.comms.query/results
-            [{:items [], :paging {:total 0, :count 0, :index 0}}]} 
+            [{:datastore/metadata-with-activities {:items [], :paging {:total 0, :count 0, :index 0}}}]} 
            @resp))))
