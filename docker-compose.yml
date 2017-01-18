@@ -8,6 +8,26 @@ kafka:
           - zookeeper:zookeeper
         ports:
           - "9092:9092"
+influxdb:
+        image: 'tutum/influxdb:0.13'
+        environment:
+          - ADMIN_USER="root"
+          - INFLUXDB_INIT_PWD="somepassword"
+          - PRE_CREATE_DB="metrics"
+        ports:
+          - "8086:8086"
+          - "8083:8083"
+elasticsearch:
+        image: 'elasticsearch:2.4.1'
+        ports:
+          - "9200:9200"
+          - "9300:9300"
+cassandra:
+        image: 'cassandra:2.2'
+        ports:
+          - "9042:9042"
+          - "9160:9160"
+##
 datastore:
         image: 'mastodonc/kixi.datastore:latest'
         #use volumes_from until we upgrade and get depends_on
@@ -27,17 +47,19 @@ datastore:
           - ZOOKEEPER=zookeeper
           - ELASTICSEARCH=elasticsearch
           - INFLUXDB=influxdb
-influxdb:
-        image: 'tutum/influxdb:0.13'
-        environment: 
-          - ADMIN_USER="root"
-          - INFLUXDB_INIT_PWD="somepassword"
-          - PRE_CREATE_DB="metrics"
+heimdall:
+        image: 'mastodonc/kixi.heimdall-dev:latest'
         ports:
-          - "8086:8086"
-          - "8083:8083"
-elasticsearch:
-        image: 'elasticsearch:2.4.1'
-        ports:
-          - "9200:9200"
-          - "9300:9300"
+          - "3002:3002"
+        volumes_from:
+          - "zookeeper"
+          - "kafka"
+          - "influxdb"
+        links:
+          - zookeeper:zookeeper
+          - influxdb:influxdb
+          - cassandra:cassandra
+        environment:
+          - ZOOKEEPER=zookeeper
+          - INFLUXDB=influxdb
+          - CASSANDRA=cassandra
