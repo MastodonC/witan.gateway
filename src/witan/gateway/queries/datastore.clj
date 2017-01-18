@@ -26,10 +26,12 @@
   (let [url (datastore-url system-map "metadata" id)
         resp @(http/get url {:headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]
-    (:body (update resp
-                      :body
-                      #(when %
-                         (json/parse-string % keyword))))))
+    (if (= 200 (:status resp))
+      (:body (update resp
+                     :body
+                     #(when %
+                        (json/parse-string % keyword))))
+      {:error (str "invalid status: " (:status resp))})))
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
