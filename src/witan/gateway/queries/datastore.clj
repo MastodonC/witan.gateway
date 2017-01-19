@@ -22,8 +22,8 @@
 ;; kixi.datastore.metadatastore
 
 (defn metadata-by-id
-  [{:keys [kixi.user/id kixi.user/groups]} system-map id]
-  (let [url (datastore-url system-map "metadata" id)
+  [{:keys [kixi.user/id kixi.user/groups]} system-map meta-id]
+  (let [url (datastore-url system-map "metadata" meta-id)
         resp @(http/get url {:headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]
     (if (= 200 (:status resp))
