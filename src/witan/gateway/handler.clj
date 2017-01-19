@@ -117,7 +117,7 @@
 (defmethod handle-message
   "query"
   [ch {:keys [kixi.comms.query/body kixi.comms.query/id]} user {:keys [queries]}]
-  (if-not (vector? body)
+  (if-not (map? body)
     (send-message! ch {:kixi.comms.message/type "query-response"
                        :kixi.comms.query/id id
                        :kixi.comms.query/error "Query needs to be a vector"})
