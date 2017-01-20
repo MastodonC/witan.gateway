@@ -7,7 +7,8 @@
                                :production "master.mesos"}
                :port 2181}
  :webserver {:port 30015}
- :auth {:pubkey #profile {:development "./test-resources/heimdall-dev_pubkey.pem"
+ :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
+                                            "./test-resources/heimdall-dev_pubkey.pem"]
                           :production "/root/prod_pubkey.pem"}}
  :directory {:workspace {:host #profile {:development "127.0.0.1"
                                          :production "witan-workspace.marathon.mesos"}
