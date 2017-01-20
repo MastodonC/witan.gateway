@@ -17,6 +17,7 @@ influxdb:
         ports:
           - "8086:8086"
           - "8083:8083"
+        log_driver: none
 elasticsearch:
         image: 'elasticsearch:2.4.1'
         ports:
@@ -55,6 +56,7 @@ heimdall:
           - "zookeeper"
           - "kafka"
           - "influxdb"
+          - "cassandra"
         links:
           - zookeeper:zookeeper
           - influxdb:influxdb
