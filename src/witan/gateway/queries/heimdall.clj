@@ -11,9 +11,9 @@
          (clojure.string/join "/" params)))
 
 (defn get-elements
-  [{:keys [kixi.user/id kixi.user/groups]} system-map method users]
+  [{:keys [kixi.user/id kixi.user/groups]} system-map method elements]
   (let [url (heimdall-url system-map method)
-        resp @(http/get url {:query-params {:id users}
+        resp @(http/get url {:query-params {:id elements}
                              :headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]
     (if (= 200 (:status resp))
@@ -25,8 +25,8 @@
 
 (defn get-users-info
   [u d users]
-  (get-elements u d "users" users))
+  (get-elements u d "users" (vec users)))
 
 (defn get-groups-info
   [u d groups]
-  (get-elements u d "groups" groups))
+  (get-elements u d "groups" (vec groups)))
