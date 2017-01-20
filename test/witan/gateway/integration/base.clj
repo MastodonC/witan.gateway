@@ -13,9 +13,14 @@
 (def wait-tries (Integer/parseInt (env :wait-tries "65")))
 (def wait-ms (Integer/parseInt (env :wait-ms "500")))
 
+(def public-key (env :super-secret-public-pem-file
+                     "./test-resources/heimdall-dev_pubkey.pem"))
 (defn sign
   [payload]
-  (let [prvk (keys/private-key "./test-resources/heimdall-dev_privkey.pem" "test")]
+  (let [prvk
+        (keys/private-key
+         (env :super-secret-pem-file "./test-resources/heimdall-dev_privkey.pem")
+         (env :super-secret-password "test"))]
     (jwt/sign payload prvk {:alg :rs256})))
 
 (defn cycle-system-fixture

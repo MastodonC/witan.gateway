@@ -7,7 +7,8 @@
                                :production "master.mesos"}
                :port 2181}
  :webserver {:port 30015}
- :auth {:pubkey #profile {:development "./test-resources/heimdall-dev_pubkey.pem"
+ :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
+                                            "./test-resources/heimdall-dev_pubkey.pem"]
                           :production "/root/prod_pubkey.pem"}}
  :directory {:workspace {:host #profile {:development "127.0.0.1"
                                          :production "witan-workspace.marathon.mesos"}
@@ -15,13 +16,13 @@
              :data-acquisition {:host #profile {:development "127.0.0.1"
                                                 :production "kixi-data-acquisition.marathon.mesos"}
                                 :port 40015}
-             :heimdall #profile {:development {:host "localhost"
-                                               :port 3002}
+             :heimdall #profile {:development {:host #or [#env HEIMDALL_HOST "localhost"]
+                                               :port #or [#env HEIMDALL_PORT 3002]}
                                  :production {:host "heimdall.marathon.mesos"
                                               :port 10010}}
-             :datastore #profile {:development {:host "localhost"
-                                                :port 8080}
+             :datastore #profile {:development {:host #or [#env DATASTORE_HOST "localhost"]
+                                                :port #or [#env DATASTORE_PORT 8080]}
                                   :production {:host "kixi.datastore.marathon.mesos"
                                                :port 18080}}}
  :log {:level #profile {:development :info
-                        :production :info}}}
+                        :production  :info}}}
