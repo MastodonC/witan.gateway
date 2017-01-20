@@ -199,9 +199,11 @@
     [pre-process result]))
 
 (defn valid-auth?
-  [auth {:keys [kixi.comms.auth/token-pair]}]
-  (let [{:keys [auth-token]} token-pair]
-    (p/authenticate auth (t/now) auth-token)))
+  [auth {:keys [kixi.comms.auth/token-pair] :as msg}]
+  (if (== "refresh" (:kixi.comms.message/type msg))
+    {} ;; if refreshing, return an empty user
+    (let [{:keys [auth-token]} token-pair]
+      (p/authenticate auth (t/now) auth-token))))
 
 (defn ws-handler [request]
   (let [components (:components request)]

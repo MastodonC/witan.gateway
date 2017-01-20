@@ -34,7 +34,7 @@
   [u d body]
   (update-items
    body
-   (fn [item]
+   (fn expanding-item [item]
      (let [prov-user-id
            (get-in item [:kixi.datastore.metadatastore/provenance
                          :kixi.user/id])
@@ -48,22 +48,22 @@
                                  (vals)
                                  (reduce concat)
                                  (set))
-               group-resp (heimdall/get-groups-info u d collected-groups)]
+               group-resp (:items (heimdall/get-groups-info u d collected-groups))]
            (if (:error group-resp)
              (error (format "Heimdall failed to return group information for %s: %s"
                             collected-groups
                             group-resp))
-             (let [group-info (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {})]
+             (let [group-info (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {} group-resp)]
                (-> item
                    (assoc-in [:kixi.datastore.metadatastore/provenance
                               :kixi/user] (first (:items user-info)))
                    (update :kixi.datastore.metadatastore/provenance dissoc :kixi.user/id)
                    (update :kixi.datastore.metadatastore/sharing
-                           (fn [sharing]
+                           (fn expand-sharing [sharing]
                              (zipmap (keys sharing)
                                      (map (partial mapv group-info) (vals sharing))))))))))))))
 
-;; kixi.datastore.metadatastore
+b;; kixi.datastore.metadatastore
 
 (defn metadata-by-id
   [{:keys [kixi.user/id kixi.user/groups] :as u} d meta-id]
