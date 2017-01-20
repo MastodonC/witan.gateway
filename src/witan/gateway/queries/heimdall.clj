@@ -24,7 +24,7 @@
       {:error (str "invalid status: " (:status resp))})))
 
 (defn get-user-info
-  [{:keys [kixi.user/id kixi.user/groups]} system-map method user-id]
+  [{:keys [kixi.user/id kixi.user/groups]} system-map user-id]
   (let [url (heimdall-url system-map "user" user-id)
         resp @(http/get url {:headers {"user-groups" (clojure.string/join "," groups)
                                        "user-id" id}})]

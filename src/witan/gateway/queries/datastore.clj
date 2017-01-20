@@ -33,7 +33,7 @@
      (let [prov-user-id
            (get-in item [:kixi.datastore.metadatastore/provenance
                          :kixi.user/id])
-           user-info (heimdall/get-users-info u d [prov-user-id])
+           user-info (heimdall/get-user-info u d prov-user-id)
            collected-groups (->>
                              (:kixi.datastore.metadatastore/sharing item)
                              (vals)
@@ -42,7 +42,7 @@
                              (vec))
            group-info (->> collected-groups
                            (heimdall/get-groups-info u d)
-                           (reduce (fn [a m] (assoc a (:kixi.group/id m) m))))]
+                           (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {}))]
        (-> item
            (assoc-in [:kixi.datastore.metadatastore/provenance
                       :kixi/user] user-info)
