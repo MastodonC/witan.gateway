@@ -23,7 +23,12 @@
 
 (defn update-items
   [body fnc]
-  (update body :items (fn [items] (map fnc items))))
+  (update body :items (fn [items] (vec (keep fnc items)))))
+
+(defn error
+  [msg]
+  (log/error msg)
+  nil)
 
 (defn expand-metadata
   [u d body]
@@ -33,24 +38,29 @@
      (let [prov-user-id
            (get-in item [:kixi.datastore.metadatastore/provenance
                          :kixi.user/id])
-           user-info (heimdall/get-user-info u d prov-user-id)
-           collected-groups (->>
-                             (:kixi.datastore.metadatastore/sharing item)
-                             (vals)
-                             (reduce concat)
-                             (set)
-                             (vec))
-           group-info (->> collected-groups
-                           (heimdall/get-groups-info u d)
-                           (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {}))]
-       (-> item
-           (assoc-in [:kixi.datastore.metadatastore/provenance
-                      :kixi/user] user-info)
-           (update :kixi.datastore.metadatastore/provenance dissoc :kixi.user/id)
-           (update :kixi.datastore.metadatastore/sharing
-                   (fn [x]
-                     (reduce-kv (fn [a k vs]
-                                  (assoc a k (mapv #(get group-info %) vs))) {} x))))))))
+           user-info (heimdall/get-users-info u d [prov-user-id])]
+       (if (:error user-info)
+         (error (format "Heimdall failed to return user information for %s: %s"
+                        prov-user-id
+                        user-info))
+         (let [collected-groups (->>
+                                 (:kixi.datastore.metadatastore/sharing item)
+                                 (vals)
+                                 (reduce concat)
+                                 (set)
+                                 (vec))
+               group-resp (heimdall/get-groups-info u d collected-groups)]
+           (if (:error group-resp)
+             group-resp
+             (let [group-info (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {})]
+               (-> item
+                   (assoc-in [:kixi.datastore.metadatastore/provenance
+                              :kixi/user] (first (:items user-info)))
+                   (update :kixi.datastore.metadatastore/provenance dissoc :kixi.user/id)
+                   (update :kixi.datastore.metadatastore/sharing
+                           (fn [x]
+                             (reduce-kv (fn [a k vs]
+                                          (assoc a k (mapv #(get group-info %) vs))) {} x))))))))))))
 
 ;; kixi.datastore.metadatastore
 
