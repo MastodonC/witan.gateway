@@ -47,11 +47,12 @@
                                  (:kixi.datastore.metadatastore/sharing item)
                                  (vals)
                                  (reduce concat)
-                                 (set)
-                                 (vec))
+                                 (set))
                group-resp (heimdall/get-groups-info u d collected-groups)]
            (if (:error group-resp)
-             group-resp
+             (error (format "Heimdall failed to return group information for %s: %s"
+                            collected-groups
+                            group-resp))
              (let [group-info (reduce (fn [a m] (assoc a (:kixi.group/id m) m)) {})]
                (-> item
                    (assoc-in [:kixi.datastore.metadatastore/provenance
