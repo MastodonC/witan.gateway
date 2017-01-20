@@ -59,9 +59,9 @@
                               :kixi/user] (first (:items user-info)))
                    (update :kixi.datastore.metadatastore/provenance dissoc :kixi.user/id)
                    (update :kixi.datastore.metadatastore/sharing
-                           (fn [x]
-                             (reduce-kv (fn [a k vs]
-                                          (assoc a k (mapv #(get group-info %) vs))) {} x))))))))))))
+                           (fn [sharing]
+                             (zipmap (keys sharing)
+                                     (map (partial mapv group-info) (vals sharing))))))))))))))
 
 ;; kixi.datastore.metadatastore
 
