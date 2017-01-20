@@ -13,6 +13,8 @@
 (def wait-tries (Integer/parseInt (env :wait-tries "65")))
 (def wait-ms (Integer/parseInt (env :wait-ms "500")))
 
+(def public-key (env :super-secret-public-pem-file
+                     "./test-resources/heimdall-dev_pubkey.pem"))
 (defn sign
   [payload]
   (let [prvk

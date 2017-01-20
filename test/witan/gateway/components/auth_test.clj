@@ -17,8 +17,7 @@
          :id (uuid)
          :user-groups {:groups [(uuid)]}}))
 
-(def auth (component/start
-           (->Authenticator "./test-resources/auth_pubkey.pem")))
+(def auth (component/start (->Authenticator public-key)))
 
 (deftest auth-pass
   (is (p/authenticate auth (t/now) valid-auth-token)))
