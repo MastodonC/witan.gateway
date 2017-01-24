@@ -6,7 +6,8 @@
             ;;
             [witan.gateway.queries.data-acquisition :as qda]
             [witan.gateway.queries.workspace :as qw]
-            [witan.gateway.queries.datastore :as qds]))
+            [witan.gateway.queries.datastore :as qds]
+            [witan.gateway.queries.heimdall :as qh]))
 
 (def functions
   {:workspace/list-by-owner qw/get-workspaces-by-owner
@@ -19,7 +20,9 @@
    :data-acquisition/request-by-id         qda/request-by-id
 
    :datastore/metadata-with-activities qds/metadata-with-activities
-   :datastore/metadata-by-id qds/metadata-by-id})
+   :datastore/metadata-by-id qds/metadata-by-id
+
+   :groups/search qh/group-search})
 
 (defrecord QueryRouter [service-map]
   RouteQuery

@@ -3,17 +3,8 @@
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             ;;
+            [witan.gateway.queries.utils :refer [directory-url user-header]]
             [witan.gateway.queries.heimdall :as heimdall]))
-
-(defn datastore-url
-  [s & params]
-  (apply str "http://"
-         (get-in s [:datastore :host]) ":"
-         (get-in s [:datastore :port]) "/"
-         (clojure.string/join "/" params)))
-
-(def data-fields
-  [:foo :bar])
 
 (defn encode-kw
   [kw]
@@ -71,10 +62,9 @@
 ;; kixi.datastore.metadatastore
 
 (defn metadata-by-id
-  [{:keys [kixi.user/id kixi.user/groups] :as u} d meta-id]
-  (let [url (datastore-url d "metadata" meta-id)
-        resp @(http/get url {:headers {"user-groups" (clojure.string/join "," groups)
-                                       "user-id" id}})]
+  [u d meta-id]
+  (let [url (directory-url :datastore d "metadata" meta-id)
+        resp @(http/get url {:headers (user-header u)})]
     (if (= 200 (:status resp))
       (let [body (:body (update resp
                                 :body
@@ -85,16 +75,15 @@
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
-  [{:keys [kixi.user/id kixi.user/groups] :as u} d activities]
-  (let [url (datastore-url d "metadata")
+  [u d activities]
+  (let [url (directory-url :datastore d "metadata")
         resp @(http/get url {:query-params (merge {:activity
                                                    (mapv encode-kw activities)}
                                                   #_(when index
                                                       {:index index})
                                                   #_(when count
                                                       {:count count}))
-                             :headers {"user-groups" (clojure.string/join "," groups)
-                                       "user-id" id}})]
+                             :headers (user-header u)})]
     (if (= 200 (:status resp))
       (let [body (:body (update resp
                                 :body

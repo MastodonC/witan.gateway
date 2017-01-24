@@ -1,21 +1,14 @@
 (ns witan.gateway.queries.heimdall
   (:require [taoensso.timbre :as log]
             [org.httpkit.client :as http]
-            [cheshire.core :as json]))
-
-(defn heimdall-url
-  [s & params]
-  (apply str "http://"
-         (get-in s [:heimdall :host]) ":"
-         (get-in s [:heimdall :port]) "/"
-         (clojure.string/join "/" params)))
+            [cheshire.core :as json]
+            [witan.gateway.queries.utils :refer [directory-url user-header]]))
 
 (defn get-elements
-  [{:keys [kixi.user/id kixi.user/groups]} system-map method elements]
-  (let [url (heimdall-url system-map method)
+  [u d method elements]
+  (let [url (directory-url :heimdall d method)
         resp @(http/get url {:query-params {:id elements}
-                             :headers {"user-groups" (clojure.string/join "," groups)
-                                       "user-id" id}})]
+                             :headers (user-header u)})]
     (if (= 200 (:status resp))
       (:body (update resp
                      :body
@@ -30,3 +23,14 @@
 (defn get-groups-info
   [u d groups]
   (get-elements u d "groups" (vec groups)))
+
+(defn group-search
+  [u d]
+  (let [url (directory-url :heimdall d "groups" "search")
+        resp @(http/get url {:headers (user-header u)})]
+    (if (= 200 (:status resp))
+      (:body (update resp
+                     :body
+                     #(when %
+                        (json/parse-string % keyword))))
+      {:error (str "invalid status: " (:status resp))})))
