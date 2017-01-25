@@ -18,8 +18,10 @@
             expiry (-> auth-payload :exp ct/from-long)]
         (if (t/before? time expiry)
           {:kixi.user/id (:id auth-payload)
-           :kixi.user/groups (concat (:user-groups auth-payload)
-                                     (:groups auth-payload))}
+           :kixi.user/groups (-> (conj (:user-groups auth-payload)
+                                       (:self-group auth-payload))
+                                 (set)
+                                 (vec))}
           (throw (Exception. "Auth token has expired"))))
       (catch Exception e (log/warn e "Failed to unsign an auth token:"))))
 
