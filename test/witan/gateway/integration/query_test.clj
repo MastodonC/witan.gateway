@@ -20,7 +20,8 @@
 (def token
   {:kixi.comms.auth/token-pair
    {:auth-token (sign {:id (uuid)
-                       :groups [(uuid)]})}})
+                       :user-groups [(uuid)]
+                       :self-group (uuid)})}})
 
 (defn send-query
   [qid query-name param-v]
@@ -38,5 +39,5 @@
     (is (= {:kixi.comms.message/type "query-response",
             :kixi.comms.query/id qid
             :kixi.comms.query/results
-            [{:datastore/metadata-with-activities {:items [], :paging {:total 0, :count 0, :index 0}}}]} 
+            [{:datastore/metadata-with-activities {:items [], :paging {:total 0, :count 0, :index 0}}}]}
            @resp))))
