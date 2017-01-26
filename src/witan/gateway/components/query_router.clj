@@ -29,9 +29,10 @@
   (route-query [{:keys [graph]} user [query [params fields]]]
     (log/info "Query:" query params user)
     (if-let [func (get functions query)]
-      {query (apply (partial func
-                             user service-map)
-                    params)}
+      (let [result (apply (partial func user service-map) params)
+            additional (when (:error result) {:original {:params params
+                                                         :fields fields}})]
+        {query (merge result additional)})
       {query {:error "does not exist"}}))
 
   component/Lifecycle
