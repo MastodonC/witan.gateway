@@ -27,3 +27,8 @@
 
 (defprotocol Authenticate
   (authenticate [this time auth-token]))
+
+;;;;;;;;;
+
+(defprotocol ManageDownloads
+  (create-download-redirect [this user file-id]))

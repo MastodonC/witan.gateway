@@ -13,7 +13,7 @@
 (defrecord ConnectionManager [host port]
   ManageConnections
   (process-event! [{:keys [receipts]} event]
-    (log/info "Observed event" (:kixi.comms.event/id event))
+    (log/info "Observed event" (:kixi.comms.event/id event) (:kixi.comms.event/key event))
     (when-let [id (:kixi.comms.command/id event)]
       (try
         (when-let [{:keys [cb]} (get @receipts id)]
