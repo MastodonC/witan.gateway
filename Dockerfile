@@ -1,4 +1,4 @@
-FROM phusion/baseimage:0.9.17
+FROM phusion/baseimage:0.9.19
 MAINTAINER Antony Woods <antony@mastodonc.com>
 
 CMD ["/sbin/my_init"]
@@ -12,6 +12,7 @@ RUN add-apt-repository -y ppa:webupd8team/java \
 && apt-get install -y \
 software-properties-common \
 oracle-java8-installer
+oracle-java8-set-default
 
 # Install Nginx.
 RUN apt-get install -y python-software-properties && \
