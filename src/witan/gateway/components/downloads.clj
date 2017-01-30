@@ -13,10 +13,11 @@
         pd (:pending-downloads this)
         user-id (get-in payload [:kixi/user :kixi.user/id])
         ch (get-in @pd [user-id id])]
-    (when link
-      (put! ch link))
-    (close! ch)
-    (swap! pd update user-id #(dissoc % id))
+    (when ch
+      (when link
+        (put! ch link))
+      (close! ch)
+      (swap! pd update user-id #(dissoc % id)))
     nil))
 
 (defrecord DownloadManager [timeout]
