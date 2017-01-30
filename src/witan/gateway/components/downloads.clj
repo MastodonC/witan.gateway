@@ -8,14 +8,14 @@
 (defn handle-download-event-fn [ch]
   (fn [event]
     (when (or (= :kixi.datastore.filestore/download-link-created (:kixi.comms.event/key event))
-              (= :kixi.datastore.filestore/download-link-rejected (:kixi.comms.event/key event))))
-    (let [{:keys [kixi.comms.event/payload]} event
-          {:keys [kixi.datastore.metadatastore/link
-                  kixi.datastore.metadatastore/id]} payload]
-      (when link
-        (put! ch link))
-      (close! ch)
-      nil)))
+              (= :kixi.datastore.filestore/download-link-rejected (:kixi.comms.event/key event)))
+      (let [{:keys [kixi.comms.event/payload]} event
+            {:keys [kixi.datastore.metadatastore/link
+                    kixi.datastore.metadatastore/id]} payload]
+        (when link
+          (put! ch link))
+        (close! ch)
+        nil))))
 
 (defrecord DownloadManager [timeout]
   ManageDownloads
