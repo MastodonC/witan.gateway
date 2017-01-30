@@ -3,9 +3,10 @@
                  :zk-path #profile {:development #or [#env ZK_PATH "/"]
                                     :production "/dcos-service-kafka/"}
                  :port 2181}}
- :connections {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
-                               :production "master.mesos"}
-               :port 2181}
+ :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+                          :production "master.mesos"}
+          :port 2181}
+ :connections {}
  :webserver {:port 30015}
  :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
                                             "./test-resources/heimdall-dev_pubkey.pem"]
@@ -25,4 +26,5 @@
                                   :production {:host "kixi.datastore.marathon.mesos"
                                                :port 18080}}}
  :log {:level #profile {:development :info
-                        :production  :info}}}
+                        :production  :info}}
+ :downloads {:timeout 10000}}

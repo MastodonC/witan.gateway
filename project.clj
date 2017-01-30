@@ -2,6 +2,7 @@
   :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/core.async "0.2.371"]
+                 [org.clojure/data.codec "0.1.0"]
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/timbre "4.7.4"]
                  [com.cognitect/transit-clj "0.8.290"]
@@ -9,6 +10,7 @@
                  [clj-time "0.11.0"]
                  [http-kit "2.1.19"]
                  [ring-cors "0.1.8"]
+                 [ring/ring-core "1.5.1"]
                  [compojure "1.5.1"]
                  [clj-http "2.1.0"]
                  [environ "1.1.0"]
@@ -23,5 +25,6 @@
                        :uberjar-name "witan.gateway-standalone.jar"}
              :dev {:source-paths ["dev-src"]
                    :dependencies [[org.clojure/tools.namespace "0.2.4"]
-                                  [stylefruits/gniazdo "1.0.0"]]
+                                  [stylefruits/gniazdo "1.0.0"]
+                                  [me.raynes/fs "1.4.6"]]
                    :repl-options {:init-ns user}}})

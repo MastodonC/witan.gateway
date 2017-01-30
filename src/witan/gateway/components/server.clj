@@ -1,7 +1,8 @@
 (ns witan.gateway.components.server
   (:gen-class)
   (:require [org.httpkit.server           :as httpkit]
-            [ring.middleware.content-type :refer [wrap-content-type]]
+            [ring.middleware.cookies      :refer [wrap-cookies]]
+            [ring.middleware.params       :refer [wrap-params]]
             [com.stuartsierra.component   :as component]
             [witan.gateway.handler        :refer [app]]
             [taoensso.timbre              :as log]
@@ -36,10 +37,11 @@
     (assoc this :http-kit (httpkit/run-server
                            (-> #'app
                                (wrap-catch-exceptions)
+                               (wrap-cookies)
+                               (wrap-params)
                                (wrap-directory directory)
                                (wrap-components this)
                                (wrap-log)
-                               (wrap-content-type "application/json")
                                (wrap-cors :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :post]))
                            {:port port})))

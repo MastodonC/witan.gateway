@@ -3,7 +3,7 @@
             [taoensso.timbre :as log]
             [clojure.spec :as s]
             [witan.gateway.protocols :as p]
-            [clojure.core.async :as async :refer [chan go go-loop put! <!]]
+            [clojure.core.async :as async :refer [chan go go-loop put! <! <!!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [org.httpkit.client :as httpk-client]
             [clj-time.core :as t]
@@ -13,10 +13,10 @@
             [kixi.comms.time :refer [timestamp]]
             [cognitect.transit :as tr]
             [cheshire.core :as json]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.data.codec.base64 :as b64])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.httpkit.BytesInputStream]))
-
 
 (defn get-client-ip [req]
   (if-let [ips (get-in req [:headers "x-forwarded-for"])]
@@ -81,32 +81,6 @@
        (update r :body transit-encode)
        {:status (:status r)
         :body (transit-encode {:witan.gateway/error (:body r)})}))))
-
-(defn uuid-from-url
-  [^String url]
-  (subs url (inc (.lastIndexOf url "/"))))
-
-(defn post-multipart-to-datastore
-  [{:keys [content-type components multipart-params headers body] :as req} path]
-  (let [{:keys [host port]} (get-in components [:directory :datastore])
-        datastore-url (str "http://" host ":" port "/" path)
-        payload {:body body
-                 :headers (merge (select-keys headers
-                                              ["file-size"
-                                               "user-id"
-                                               "user-groups"])
-                                 {"Content-Type" content-type})
-                 :throw-exceptions false}
-        r @(httpk-client/post datastore-url payload)
-        status (:status r)]
-    (merge {:status status}
-           (cond
-             (= status 201) {:body (transit-encode {:witan.gateway/uploaded-resource-id
-                                                    (uuid-from-url
-                                                     (get-in r [:headers :location]))})}
-             (= status 404) {:body (transit-encode {:witan.gateway/error :not-found})}
-             (< status 500) {:body (transit-encode {:witan.gateway/error (json/parse-string (:body r) true)})}
-             :else {:body (transit-encode {:witan.gateway/error :upload-failed})}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling
@@ -239,15 +213,26 @@
   [req]
   (post-to-heimdall req "create-auth-token" (:body req)))
 
-(defn upload
+(defn download
+  "create a download link and 301 to it"
   [req]
-  (if (clojure.string/includes? (:content-type req) "multipart/form-data")
-    (post-multipart-to-datastore req "file")
-    {:status 400}))
+  {:status 401 :body "wut"}
+  (let [auth (get-in req [:components :auth])
+        downloads (get-in req [:components :downloads])
+        id (get-in req [:params "id"])
+        auth-token (get-in req [:cookies "token" :value])
+        user (p/authenticate auth (t/now) auth-token)]
+    (if-let [location (and user
+                           (p/create-download-redirect downloads user id))]
+      {:status 302
+       :headers {"Location" location}}
+      {:status 401
+       :body "Unauthorized"})))
+
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/health" [] (str "hello"))
+  (GET "/download" req (download req))
   (POST "/signup" req (signup req))
-  (POST "/login" req (login req))
-  (POST "/upload" req (upload req)))
+  (POST "/login" req (login req)))

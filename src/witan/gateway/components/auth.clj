@@ -12,18 +12,19 @@
 (defrecord Authenticator [pubkey]
   Authenticate
   (authenticate [this time auth-token]
-    (try
-      (let [pk (:loaded-pubkey this)
-            auth-payload (jwt/unsign auth-token pk {:alg :rs256})
-            expiry (-> auth-payload :exp ct/from-long)]
-        (if (t/before? time expiry)
-          {:kixi.user/id (:id auth-payload)
-           :kixi.user/groups (-> (conj (:user-groups auth-payload)
-                                       (:self-group auth-payload))
-                                 (set)
-                                 (vec))}
-          (throw (Exception. "Auth token has expired"))))
-      (catch Exception e (log/warn e "Failed to unsign an auth token:"))))
+    (when auth-token
+      (try
+        (let [pk (:loaded-pubkey this)
+              auth-payload (jwt/unsign auth-token pk {:alg :rs256})
+              expiry (-> auth-payload :exp ct/from-long)]
+          (if (t/before? time expiry)
+            {:kixi.user/id (:id auth-payload)
+             :kixi.user/groups (-> (conj (:user-groups auth-payload)
+                                         (:self-group auth-payload))
+                                   (set)
+                                   (vec))}
+            (throw (Exception. "Auth token has expired"))))
+        (catch Exception e (log/warn e "Failed to unsign an auth token:")))))
 
   component/Lifecycle
   (start [component]
