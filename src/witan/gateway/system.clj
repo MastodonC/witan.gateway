@@ -13,7 +13,8 @@
             [witan.gateway.components.query-router :refer [new-query-router]]
             [witan.gateway.components.connection-manager :refer [new-connection-manager]]
             [witan.gateway.components.auth :refer [new-authenticator]]
-            [witan.gateway.components.downloads :refer [new-download-manager]]))
+            [witan.gateway.components.downloads :refer [new-download-manager]]
+            [witan.gateway.components.events :refer [new-event-aggregator]]))
 
 (defn new-system [profile]
   (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})]
@@ -27,12 +28,15 @@
     (component/system-map
      :auth        (new-authenticator (-> config :auth))
      :comms       (kafka/map->Kafka (-> config :comms :kafka))
+     :events      (component/using
+                   (new-event-aggregator (-> config :events))
+                   [:comms])
      :downloads   (component/using
                    (new-download-manager (-> config :downloads))
-                   [:comms])
+                   [:comms :events])
      :connections (component/using
                    (new-connection-manager (-> config :connections))
-                   [:comms])
+                   [:comms :events])
      :queries     (new-query-router (:directory config))
      :http-kit    (component/using
                    (new-http-server (:webserver config) (:directory config))

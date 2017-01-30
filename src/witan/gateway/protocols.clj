@@ -32,3 +32,9 @@
 
 (defprotocol ManageDownloads
   (create-download-redirect [this user file-id]))
+
+;;;;;;;;;
+
+(defprotocol AggregateEvents
+  (register-event-receiver! [this handler-fn])
+  (unregister-event-receiver! [this handler-fn]))

@@ -5,53 +5,42 @@
             [witan.gateway.protocols    :as p :refer [ManageDownloads]]
             [kixi.comms :as c]))
 
-(defn on-download-link
-  [this args]
-  (let [{:keys [kixi.comms.event/payload]} args
-        {:keys [kixi.datastore.metadatastore/link
-                kixi.datastore.metadatastore/id]} payload
-        pd (:pending-downloads this)
-        user-id (get-in payload [:kixi/user :kixi.user/id])
-        ch (get-in @pd [user-id id])]
-    (when ch
+(defn handle-download-event-fn [ch]
+  (fn [event]
+    (when (or (= :kixi.datastore.filestore/download-link-created (:kixi.comms.event/key event))
+              (= :kixi.datastore.filestore/download-link-rejected (:kixi.comms.event/key event))))
+    (let [{:keys [kixi.comms.event/payload]} event
+          {:keys [kixi.datastore.metadatastore/link
+                  kixi.datastore.metadatastore/id]} payload]
       (when link
         (put! ch link))
       (close! ch)
-      (swap! pd update user-id #(dissoc % id)))
-    nil))
+      nil)))
 
 (defrecord DownloadManager [timeout]
   ManageDownloads
-  (create-download-redirect [{:keys [pending-downloads comms]} user file-id]
+  (create-download-redirect [{:keys [comms events]} user file-id]
     (log/info "Attempting to redirect download for user"
               (:kixi.user/id user) "to file" file-id)
-    (let [download-chan (chan 1)]
-      (swap! pending-downloads update (:kixi.user/id user) #(assoc % file-id download-chan))
+    (let [download-chan (chan 1)
+          dlfn (handle-download-event-fn download-chan)]
+      (p/register-event-receiver! events dlfn)
       (c/send-command! comms :kixi.datastore.filestore/create-download-link "1.0.0"
                        user
                        {:kixi.datastore.metadatastore/id file-id})
       (let [[v p] (async/alts!! [download-chan (async/timeout (or timeout 10000))])]
+        (p/unregister-event-receiver! events dlfn)
         (when (= p download-chan)
           v))))
 
   component/Lifecycle
   (start [{:keys [comms] :as component}]
     (log/info "Starting Download Manager")
-    (let [cp (assoc component :pending-downloads (atom {}))
-          event-handlers [(c/attach-event-handler! comms :download-manager-link-success
-                                                   :kixi.datastore.filestore/download-link-created "1.0.0"
-                                                   (partial on-download-link cp))
-                          (c/attach-event-handler! comms :download-manager-link-failure
-                                                   :kixi.datastore.filestore/download-link-rejected "1.0.0"
-                                                   (partial on-download-link cp))]]
-      (assoc cp :event-handlers event-handlers)))
+    component)
 
   (stop [{:keys [comms] :as component}]
     (log/info "Stopping Download Manager")
-    (run! (partial c/detach-handler! comms) (:event-handlers component))
-    (-> component
-        (dissoc :pending-downloads) ;; Do we need to close any open chans?
-        (dissoc :event-handlers))))
+    component))
 
 (defn new-download-manager
   [config]

@@ -10,10 +10,9 @@
 (defonce channels (atom #{}))
 (defonce receipts (atom {}))
 
-(defrecord ConnectionManager [host port]
+(defrecord ConnectionManager []
   ManageConnections
   (process-event! [{:keys [receipts]} event]
-    (log/info "Observed event" (:kixi.comms.event/id event) (:kixi.comms.event/key event))
     (when-let [id (:kixi.comms.command/id event)]
       (try
         (when-let [{:keys [cb]} (get @receipts id)]
@@ -36,27 +35,22 @@
     (swap! receipts assoc (str id) {:cb cb :at (t/now)}))
 
   component/Lifecycle
-  (start [{:keys [comms] :as component}]
+  (start [{:keys [comms events] :as component}]
     (log/info "Starting Connection Manager")
-    (let [zk (zk/connect (str host ":" port))
-          seq-name (zk/create-all zk "/kixi/gateway/connections-manager/consumer-" :sequential? true)
-          consumer-name (clojure.string/replace seq-name #"/" "-")
-          c (assoc component
+    (let [c (assoc component
                    :channels  (atom #{})
-                   :receipts  (atom {}))]
-      (zk/close zk)
-      (c/attach-event-with-key-handler!
-       (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
-       consumer-name
-       :kixi.comms.command/id
-       (partial p/process-event! c))
-      c))
+                   :receipts  (atom {}))
+          cmfn (partial p/process-event! c)]
+      (p/register-event-receiver! events cmfn)
+      (assoc c :cmfn cmfn)))
 
-  (stop [component]
+  (stop [{:keys [comms events] :as component}]
     (log/info "Stopping Connection Manager")
+    (p/unregister-event-receiver! events (:cmfn component))
     (dissoc component
+            :cmfn
             :channels
             :receipts)))
 
-(defn new-connection-manager [args]
-  (map->ConnectionManager args))
+(defn new-connection-manager [_]
+  (map->ConnectionManager {}))
