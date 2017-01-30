@@ -11,7 +11,7 @@
   [receivers event]
   (log/info "Observed event" (:kixi.comms.event/id event) (:kixi.comms.event/key event))
   (when (and receivers (not-empty @receivers))
-    (log/info "Forwarding to" (count @receivers) "receiver(s)...")
+    (log/debug "Forwarding to" (count @receivers) "receiver(s)...")
     (run! (fn [x] (x event)) @receivers))
   nil)
 
