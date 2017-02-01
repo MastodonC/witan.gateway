@@ -84,6 +84,7 @@
   [system file-id-atom all-tests]
   (let [{:keys [comms auth]} @system
         user (test-login auth)
+        _ (log/info "Result of test login:" user)
         ehs [(c/attach-event-handler!
               comms
               :download-test-upload-link-created
@@ -103,7 +104,9 @@
                 (let [{:keys [kixi.datastore.metadatastore/id]} payload]
                   (reset! file-id-atom id))
                 nil))]]
+    _ (log/info "Handlers attached." )
     (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil)
+    _ (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
     (if-not (clojure.string/blank? @file-id-atom)
