@@ -2,7 +2,9 @@
                                  :production "master.mesos"}
                  :zk-path #profile {:development #or [#env ZK_PATH "/"]
                                     :production "/dcos-service-kafka/"}
-                 :port 2181}}
+                 :port 2181
+                 :topics {:command #or [#env COMMAND_TOPIC "command"]
+                          :event #or [#env EVENT_TOPIC "event"]}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                           :production "master.mesos"}
           :port 2181}
