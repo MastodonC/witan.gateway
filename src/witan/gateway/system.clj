@@ -28,12 +28,10 @@
     (component/system-map
      :auth        (new-authenticator (-> config :auth))
      :comms       (kafka/map->Kafka (-> config :comms :kafka))
+     :downloads   (new-download-manager (-> config :downloads) (:directory config))
      :events      (component/using
                    (new-event-aggregator (-> config :events))
                    [:comms])
-     :downloads   (component/using
-                   (new-download-manager (-> config :downloads))
-                   [:comms :events])
      :connections (component/using
                    (new-connection-manager (-> config :connections))
                    [:comms :events])

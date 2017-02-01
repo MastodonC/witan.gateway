@@ -114,22 +114,28 @@
   (partial cycle-system-fixture system)
   (partial upload-file system file-id))
 
+(defn download-url
+  ([]
+   "http://localhost:30015/download")
+  ([id]
+   (str (download-url) "?id=" id)))
+
 (deftest download-without-token-or-query
-  (let [r (http/get "http://localhost:30015/download"
+  (let [r (http/get (download-url)
                     {:throw-exceptions false})]
     (is (= 401 (:status r)))))
 
 (deftest download-without-token
-  (let [r (http/get (str "http://localhost:30015/download?id=" @file-id)
+  (let [r (http/get (download-url @file-id)
                     {:throw-exceptions false})]
     (is (= 401 (:status r)))))
 
 (deftest download
-  (let [r (http/get (str "http://localhost:30015/download?id=" @file-id)
+  (let [r (http/get (download-url @file-id)
                     {:throw-exceptions false
                      :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
                      :follow-redirects false})]
-    (is (= 302 (:status r)))
+    (is (= 302 (:status r)) (pr-str r))
     (when-let [redirect (get-in r [:headers "Location"])]
       (if (clojure.string/starts-with? redirect "file:")
         (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
