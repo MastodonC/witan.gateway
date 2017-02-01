@@ -18,6 +18,17 @@
 (def auth-token (atom nil))
 (def test-file-contents (str "hello, world " (uuid)))
 
+(defn event-for
+  [uid event]
+  (= uid
+     (or (get-in event [:kixi.comms.event/payload :schema :kixi.datastore.schemastore/provenance :kixi.user/id])
+         (get-in event [:kixi.comms.event/payload :kixi.datastore.schemastore/provenance :kixi.user/id])
+         (get-in event [:kixi.comms.event/payload
+                        :kixi.datastore.metadatastore/file-metadata
+                        :kixi.datastore.metadatastore/provenance :kixi.user/id])
+         (get-in event [:kixi.comms.event/payload :kixi.user/id])
+         (get-in event [:kixi.comms.event/payload :kixi/user :kixi.user/id]))))
+
 (defn test-login
   [auth]
   (let [tkp (-> "http://localhost:30015/login"
@@ -53,56 +64,60 @@
   (http/put upload-link {:body tmpfile}))
 
 (defn upload-file-to-correct-location
-  [comms user file-contents {:keys [kixi.comms.event/payload]}]
+  [comms user file-contents {:keys [kixi.comms.event/payload] :as event}]
   (let [{:keys [kixi.datastore.filestore/upload-link
-                kixi.datastore.filestore/id]} payload
-        metadata {:kixi.datastore.metadatastore/name "Test File"
-                  :kixi.datastore.metadatastore/description "Test Description"
-                  :kixi.datastore.metadatastore/id id
-                  :kixi.datastore.metadatastore/type "stored"
-                  :kixi.datastore.metadatastore/file-type "txt"
-                  :kixi.datastore.metadatastore/sharing
-                  {:kixi.datastore.metadatastore/meta-read (:kixi.user/groups user)
-                   :kixi.datastore.metadatastore/meta-update (:kixi.user/groups user)
-                   :kixi.datastore.metadatastore/file-read (:kixi.user/groups user)}
-                  :kixi.datastore.metadatastore/provenance
-                  {:kixi.datastore.metadatastore/source "upload"
-                   :kixi.user/id (:kixi.user/id user)}
-                  :kixi.datastore.metadatastore/size-bytes (count file-contents)
-                  :kixi.datastore.metadatastore/header false}
-        tmpfile (fs/temp-file (str "gateway-download-test-" id "_"))]
-    (spit tmpfile file-contents)
-    (log/info "Uploading test file to" upload-link)
-    (if (clojure.string/starts-with? upload-link "file:")
-      (cp-to-docker tmpfile (subs upload-link 7))
-      (put-to-aws tmpfile upload-link))
-    (Thread/sleep 300)
-    (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata)
-    nil))
+                kixi.datastore.filestore/id]} payload]
+    (when (event-for (:kixi.user/id user) event)
+      (let [metadata {:kixi.datastore.metadatastore/name "Test File"
+                      :kixi.datastore.metadatastore/description "Test Description"
+                      :kixi.datastore.metadatastore/id id
+                      :kixi.datastore.metadatastore/type "stored"
+                      :kixi.datastore.metadatastore/file-type "txt"
+                      :kixi.datastore.metadatastore/sharing
+                      {:kixi.datastore.metadatastore/meta-read (:kixi.user/groups user)
+                       :kixi.datastore.metadatastore/meta-update (:kixi.user/groups user)
+                       :kixi.datastore.metadatastore/file-read (:kixi.user/groups user)}
+                      :kixi.datastore.metadatastore/provenance
+                      {:kixi.datastore.metadatastore/source "upload"
+                       :kixi.user/id (:kixi.user/id user)}
+                      :kixi.datastore.metadatastore/size-bytes (count file-contents)
+                      :kixi.datastore.metadatastore/header false}
+            tmpfile (fs/temp-file (str "gateway-download-test-" id "_"))]
+        (spit tmpfile file-contents)
+        (log/info "Uploading test file to" upload-link)
+        (if (clojure.string/starts-with? upload-link "file:")
+          (cp-to-docker tmpfile (subs upload-link 7))
+          (put-to-aws tmpfile upload-link))
+        (Thread/sleep 300)
+        (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata)
+        nil))))
 
 (defn upload-file
   [system file-id-atom all-tests]
   (let [{:keys [comms auth]} @system
         user (test-login auth)
+        adjusted-comms (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
         _ (log/info "Result of test login:" user)
         ehs [(c/attach-event-handler!
-              comms
+              adjusted-comms
               :download-test-upload-link-created
               :kixi.datastore.filestore/upload-link-created "1.0.0"
               (partial upload-file-to-correct-location comms user test-file-contents))
              (c/attach-event-handler!
-              comms
+              adjusted-comms
               :download-test-file-metadata-rejected
               :kixi.datastore.file-metadata/rejected "1.0.0"
               (fn [payload]
-                (log/error "Download test file was rejected:" payload) nil))
+                (when (event-for (:kixi.user/id user) payload)
+                  (log/error "Download test file was rejected:" payload)) nil))
              (c/attach-event-handler!
-              comms
+              adjusted-comms
               :download-test-file-metadata-created
               :kixi.datastore.file/created "1.0.0"
-              (fn [{:keys [kixi.comms.event/payload]}]
-                (let [{:keys [kixi.datastore.metadatastore/id]} payload]
-                  (reset! file-id-atom id))
+              (fn [{:keys [kixi.comms.event/payload] :as event}]
+                (when (event-for (:kixi.user/id user) event)
+                  (let [{:keys [kixi.datastore.metadatastore/id]} payload]
+                    (reset! file-id-atom id)))
                 nil))]]
     _ (log/info "Handlers attached." )
     (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil)
