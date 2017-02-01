@@ -31,7 +31,7 @@
 ;;;;;;;;;
 
 (defprotocol ManageDownloads
-  (create-download-redirect [this user file-id]))
+  (get-download-redirect [this user file-id]))
 
 ;;;;;;;;;
 

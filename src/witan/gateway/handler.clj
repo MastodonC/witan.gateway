@@ -5,7 +5,6 @@
             [witan.gateway.protocols :as p]
             [clojure.core.async :as async :refer [chan go go-loop put! <! <!!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
-            [org.httpkit.client :as httpk-client]
             [clj-time.core :as t]
             [clj-time.format :as tf]
             [clj-http.client :as http]
@@ -216,14 +215,13 @@
 (defn download
   "create a download link and 301 to it"
   [req]
-  {:status 401 :body "wut"}
-  (let [auth (get-in req [:components :auth])
-        downloads (get-in req [:components :downloads])
-        id (get-in req [:params "id"])
+  (let [auth       (get-in req [:components :auth])
+        downloads  (get-in req [:components :downloads])
+        id         (get-in req [:params "id"])
         auth-token (get-in req [:cookies "token" :value])
-        user (p/authenticate auth (t/now) auth-token)]
+        user       (p/authenticate auth (t/now) auth-token)]
     (if-let [location (and user
-                           (p/create-download-redirect downloads user id))]
+                           (p/get-download-redirect downloads user id))]
       {:status 302
        :headers {"Location" location}}
       {:status 401
