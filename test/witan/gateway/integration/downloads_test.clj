@@ -89,7 +89,7 @@
           (cp-to-docker tmpfile (subs upload-link 7))
           (put-to-aws tmpfile upload-link))
         (Thread/sleep 300)
-        (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata)
+        (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata {:id (:kixi.comms.command/id event)})
         nil))))
 
 (defn upload-file
@@ -98,30 +98,33 @@
         user (test-login auth)
         adjusted-comms (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
         _ (log/info "Result of test login:" user)
+        cid (uuid)
         ehs [(c/attach-event-handler!
               adjusted-comms
               :download-test-upload-link-created
               :kixi.datastore.filestore/upload-link-created "1.0.0"
-              (partial upload-file-to-correct-location comms user test-file-contents))
+              (fn [{:keys [kixi.comms.command/id] :as event}]
+                (when (= id cid)
+                  (upload-file-to-correct-location comms user test-file-contents event))))
              (c/attach-event-handler!
               adjusted-comms
               :download-test-file-metadata-rejected
               :kixi.datastore.file-metadata/rejected "1.0.0"
-              (fn [payload]
-                (when (event-for (:kixi.user/id user) payload)
-                  (log/error "Download test file was rejected:" payload)) nil))
+              (fn [{:keys [kixi.comms.command/id] :as event}]
+                (when (= id cid)
+                  (log/error "Download test file was rejected:" event))))
              (c/attach-event-handler!
               adjusted-comms
               :download-test-file-metadata-created
               :kixi.datastore.file/created "1.0.0"
-              (fn [{:keys [kixi.comms.event/payload] :as event}]
-                (when (event-for (:kixi.user/id user) event)
+              (fn [{:keys [kixi.comms.event/payload kixi.comms.command/id] :as event}]
+                (when (= id cid)
                   (let [{:keys [kixi.datastore.metadatastore/id]} payload]
                     (reset! file-id-atom id)))
                 nil))]]
-    _ (log/info "Handlers attached." )
-    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil)
-    _ (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
+    (log/info "Handlers attached." )
+    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil {:id cid})
+    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
     (if-not (clojure.string/blank? @file-id-atom)
