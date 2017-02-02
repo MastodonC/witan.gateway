@@ -27,9 +27,11 @@
   [a all-tests]
   (reset! a (repl/go))
   (Thread/sleep 2000)
-  (all-tests)
-  (repl/stop)
-  (reset! a nil))
+  (try
+    (all-tests)
+    (finally
+      (repl/stop)
+      (reset! a nil))))
 
 (defn create-ws-connection
   [a received-fn all-tests]
