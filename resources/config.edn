@@ -28,5 +28,6 @@
                                   :production {:host "kixi.datastore.marathon.mesos"
                                                :port 18080}}}
  :log {:level #profile {:development :info
-                        :production  :info}}
+                        :production  :info}
+       :options {:stacktrace-fonts {}}}
  :downloads {:timeout 10000}}
