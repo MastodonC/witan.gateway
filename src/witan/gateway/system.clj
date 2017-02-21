@@ -17,13 +17,19 @@
             [witan.gateway.components.events :refer [new-event-aggregator]]))
 
 (defn new-system [profile]
-  (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})]
+  (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})
+        log-config (assoc (:log config)
+                          :timestamp-opts logstash/logback-timestamp-opts)]
 
     ;; logging config
     (timbre/merge-config!
-     (assoc (:log config)
-            :output-fn (partial logstash/output-fn {:stacktrace-fonts {}})
-            :timestamp-opts logstash/logback-timestamp-opts))
+     (if (= profile :production)
+       (assoc log-config
+              :appenders {:direct-json {:enabled?   true
+                                        :async?     false
+                                        :output-fn identity
+                                        :fn (logstash/json->out "witan.gateway")}})
+       log-config))
 
     (component/system-map
      :auth        (new-authenticator (-> config :auth))

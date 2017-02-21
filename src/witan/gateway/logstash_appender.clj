@@ -1,6 +1,7 @@
 (ns witan.gateway.logstash-appender
   (:require [taoensso.timbre :as log]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [cheshire.core :as json]))
 
 ;; https://github.com/MastodonC/whiner-timbre/blob/master/src/whiner/handler.clj
 
@@ -10,19 +11,42 @@
    :locale   :jvm-default
    :timezone :utc})
 
-(defn output-fn
-  "Default (fn [data]) -> string output fn.
-  Use`(partial default-output-fn <opts-map>)` to modify default opts."
-  ([     data] (output-fn nil data))
-  ([opts data] ; For partials
-   (let [{:keys [no-stacktrace? stack-fonts]} opts
-         {:keys [level ?err #_vargs msg_ ?ns-str hostname_
-                 timestamp_ ?line]} data]
-     (str
-      (force timestamp_)  " "
-      (str/upper-case (name level))  " "
-      "[" (or ?ns-str "?") ":" (or ?line "?") "] - "
-      (force msg_)
-      (when-not no-stacktrace?
-        (when-let [err ?err]
-          (str "\n" (log/stacktrace err opts))))))))
+(defn stacktrace-element->vec
+  [^StackTraceElement ste]
+  [(.getFileName ste) (.getLineNumber ste) (.getMethodName ste)])
+
+(defn exception->map
+  [^Throwable e]
+  (merge
+   {:type (str (type e))
+    :trace (mapv stacktrace-element->vec (.getStackTrace e))}
+   (when-let [m (.getMessage e)]
+     {:message m})
+   (when-let [c (.getCause e)]
+     {:cause (exception->map c)})))
+
+(defn not-empty-str
+  [s]
+  (when-not (clojure.string/blank? s) s))
+
+(defn log->json
+  [data app-name]
+  (let [opts (get-in data [:config :options])
+        exp (some-> (force (:?err data)) exception->map)
+        msg (or (not-empty-str (force (:msg_ data))) (:message exp))]
+    {:level (:level data)
+     :namespace (:?ns-str data)
+     :application app-name
+     :file (:?file data)
+     :line (:?line data)
+     :exception exp
+     :hostname (force (:hostname_ data))
+     :message msg
+     "@timestamp" (force (:timestamp_ data))}))
+
+(defn json->out
+  [app-name]
+  (fn [data]
+    (json/generate-stream
+     (log->json data app-name)
+     *out*)))

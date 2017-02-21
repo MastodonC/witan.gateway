@@ -4,7 +4,7 @@
                  [org.clojure/core.async "0.2.371"]
                  [org.clojure/data.codec "0.1.0"]
                  [com.stuartsierra/component "0.3.1"]
-                 [com.taoensso/timbre "4.7.4"]
+                 [com.taoensso/timbre "4.8.0"]
                  [com.cognitect/transit-clj "0.8.290"]
                  [cheshire "5.6.3"]
                  [clj-time "0.11.0"]
@@ -17,7 +17,7 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.1.22"]
+                 [kixi/kixi.comms "0.1.26"]
                  [buddy/buddy-sign "1.3.0"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all
