@@ -1,15 +1,12 @@
 (ns witan.gateway.system
   (:gen-class)
-  (:require [com.stuartsierra.component            :as component]
-            [aero.core                             :refer [read-config]]
-            [witan.gateway.logstash-appender       :as logstash]
-            [taoensso.timbre                       :as timbre]
-            ;;
-            [witan.gateway.protocols               :refer [process-event!]]
-            ;;
-            [kixi.comms.components.kafka           :as kafka]
-            ;;
-            [witan.gateway.components.server       :refer [new-http-server]]
+  (:require [com.stuartsierra.component :as component]
+            [aero.core :refer [read-config]]
+            [kixi.log :as kixi-log]
+            [taoensso.timbre :as timbre]
+            [kixi.comms.components.kafka :as kafka]
+            [witan.gateway.protocols :refer [process-event!]]
+            [witan.gateway.components.server :refer [new-http-server]]
             [witan.gateway.components.query-router :refer [new-query-router]]
             [witan.gateway.components.connection-manager :refer [new-connection-manager]]
             [witan.gateway.components.auth :refer [new-authenticator]]
@@ -19,16 +16,13 @@
 (defn new-system [profile]
   (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})
         log-config (assoc (:log config)
-                          :timestamp-opts logstash/logback-timestamp-opts)]
+                          :timestamp-opts kixi-log/default-timestamp-opts)]
 
     ;; logging config
     (timbre/merge-config!
      (if (= profile :production)
        (assoc log-config
-              :appenders {:direct-json {:enabled?   true
-                                        :async?     false
-                                        :output-fn identity
-                                        :fn (logstash/json->out "witan.gateway")}})
+              :appenders {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")})
        log-config))
 
     (component/system-map

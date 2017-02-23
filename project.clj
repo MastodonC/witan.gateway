@@ -17,7 +17,8 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.1.26"]
+                 [kixi/kixi.comms "0.1.27"]
+                 [kixi/kixi.log "0.1.1"]
                  [buddy/buddy-sign "1.3.0"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all
@@ -27,4 +28,12 @@
                    :dependencies [[org.clojure/tools.namespace "0.2.4"]
                                   [stylefruits/gniazdo "1.0.0"]
                                   [me.raynes/fs "1.4.6"]]
-                   :repl-options {:init-ns user}}})
+                   :repl-options {:init-ns user}}}
+  :release-tasks [["vcs" "assert-committed"]
+                  ["change" "version"
+                   "leiningen.release/bump-version" "release"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "push"]])
