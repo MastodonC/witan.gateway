@@ -17,7 +17,7 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.1.26"]
+                 [kixi/kixi.comms "0.1.27"]
                  [kixi/kixi.log "0.1.1"]
                  [buddy/buddy-sign "1.3.0"]]
   :source-paths ["src"]
