@@ -19,7 +19,7 @@
                           :timestamp-opts kixi-log/default-timestamp-opts)]
 
     ;; logging config
-    (timbre/merge-config!
+    (timbre/set-config!
      (if (= profile :production)
        (assoc log-config
               :appenders {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")})
