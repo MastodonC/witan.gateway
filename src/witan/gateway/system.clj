@@ -23,7 +23,7 @@
     (timbre/set-config!
      (if (= profile :production)
        (assoc log-config
-              :appenders {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")})
+              :appenders {:direct-json (kixi-log/timbre-appender-logstash)})
        log-config))
 
     (component/system-map
