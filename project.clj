@@ -1,3 +1,4 @@
+(def metrics-version "2.7.0")
 (defproject witan.gateway "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
@@ -18,7 +19,11 @@
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
                  [kixi/kixi.comms "0.1.27"]
-                 [kixi/kixi.log "0.1.1"]
+                 [kixi/kixi.log "0.1.3"]
+                 [kixi/kixi.metrics "0.4.0"]
+                 [metrics-clojure ~metrics-version]
+                 [metrics-clojure-jvm ~metrics-version]
+                 [metrics-clojure-ring ~metrics-version]
                  [buddy/buddy-sign "1.3.0"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all

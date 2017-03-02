@@ -7,6 +7,7 @@
             [kixi.comms.components.kafka :as kafka]
             [witan.gateway.protocols :refer [process-event!]]
             [witan.gateway.components.server :refer [new-http-server]]
+            [witan.gateway.components.metrics :refer [map->Metrics]]
             [witan.gateway.components.query-router :refer [new-query-router]]
             [witan.gateway.components.connection-manager :refer [new-connection-manager]]
             [witan.gateway.components.auth :refer [new-authenticator]]
@@ -32,13 +33,16 @@
      :events      (component/using
                    (new-event-aggregator (-> config :events))
                    [:comms])
+     :metrics     (component/using
+                   (map->Metrics (:metrics config))
+                   [])
      :connections (component/using
                    (new-connection-manager (-> config :connections))
                    [:comms :events])
      :queries     (new-query-router (:directory config))
      :http-kit    (component/using
                    (new-http-server (:webserver config) (:directory config))
-                   [:connections :comms :queries :auth :downloads]))))
+                   [:connections :comms :queries :auth :downloads :metrics]))))
 
 (defn -main [& [arg]]
   (let [profile (or (keyword arg) :production)]

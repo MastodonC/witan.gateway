@@ -6,7 +6,11 @@
             [com.stuartsierra.component   :as component]
             [witan.gateway.handler        :refer [app]]
             [taoensso.timbre              :as log]
-            [ring.middleware.cors         :refer [wrap-cors]]))
+            [clojure.string :as str]
+            [metrics.timers :refer [time! timer]]
+            [kixi.metrics.name-safety :refer [safe-name]]
+            [ring.middleware.cors         :refer [wrap-cors]])
+  (:import [java.util.concurrent TimeUnit]))
 
 (defn wrap-log [handler]
   (fn [request]
@@ -30,6 +34,29 @@
   (fn [req]
     (handler (assoc req :directory directory))))
 
+(defn metric-name
+  [request response]
+  (let [name (-> (str/upper-case (name (:request-method request)))
+                 (str "." (:uri request))
+                 safe-name
+                 (str "." (:status response)))]
+    ["info" "resources" name]))
+
+(defn wrap-per-resource-metrics
+  "A middleware function to add metrics for all routes in the given
+  handler. The simpler form adds default aggregators that replace GUIDs,
+  Mongo IDs and Numbers with the constants GUID, MONGOID and NUMBER so
+  that metric paths are sensible limited. Use the second form to specify
+  your own replacements."
+  [handler metrics]
+  (fn [request]
+    (let [start (System/currentTimeMillis)
+          response (handler request)
+          duration (- (System/currentTimeMillis) start)
+          timer (timer (:registry metrics) (metric-name request response))]
+      (.update timer duration TimeUnit/MILLISECONDS)
+      response)))
+
 (defrecord HttpKit [port directory]
   component/Lifecycle
   (start [this]
@@ -42,6 +69,7 @@
                                (wrap-directory directory)
                                (wrap-components this)
                                (wrap-log)
+                               (wrap-per-resource-metrics (:metrics this))
                                (wrap-cors :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :post]))
                            {:port port})))
