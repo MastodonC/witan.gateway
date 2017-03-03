@@ -21,10 +21,10 @@
 
     ;; logging config
     (timbre/set-config!
-     (if (= profile :production)
-       (assoc log-config
-              :appenders {:direct-json (kixi-log/timbre-appender-logstash)})
-       log-config))
+     (assoc log-config
+            :appenders (if (= profile :production)
+                         {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")}
+                         {:println (timbre/println-appender)})))
 
     (component/system-map
      :auth        (new-authenticator (-> config :auth))
