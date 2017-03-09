@@ -13,11 +13,10 @@ elasticsearch:
         ports:
           - "9200:9200"
           - "9300:9300"
-cassandra:
-        image: 'cassandra:2.2'
+dynamodb:
+        image: rajatvig/dynalite-alpine
         ports:
-          - "9042:9042"
-          - "9160:9160"
+          - '8000:8000'
 ##
 datastore:
         image: 'mastodonc/kixi.datastore:latest'
@@ -31,12 +30,10 @@ datastore:
         links:
           - zookeeper:zookeeper
           - elasticsearch:elasticsearch
-          - influxdb:influxdb
         environment:
           - CONFIG_PROFILE=local
           - ZOOKEEPER=zookeeper
           - ELASTICSEARCH=elasticsearch
-          - INFLUXDB=influxdb
 heimdall:
         image: 'mastodonc/kixi.heimdall-dev:latest'
         ports:
@@ -44,12 +41,8 @@ heimdall:
         volumes_from:
           - "zookeeper"
           - "kafka"
-          - "cassandra"
         links:
           - zookeeper:zookeeper
-          - influxdb:influxdb
-          - cassandra:cassandra
+          - dynamodb:dynamodb
         environment:
           - ZOOKEEPER=zookeeper
-          - INFLUXDB=influxdb
-          - CASSANDRA=cassandra

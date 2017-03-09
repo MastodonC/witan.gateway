@@ -14,10 +14,10 @@
                                             "./test-resources/heimdall-dev_pubkey.pem"]
                           :production "/root/prod_pubkey.pem"}}
  :metrics {:json-reporter {:seconds #profile {:production 60
-                                              :development 1
-                                              :dev-docker 1 
-                                              :test 1
-                                              :jenkins 30}}}
+                                              :development 300
+                                              :dev-docker 60
+                                              :test 60
+                                              :jenkins 60}}}
  :directory {:workspace {:host #profile {:development "127.0.0.1"
                                          :production "witan-workspace.marathon.mesos"}
                          :port 20015}
