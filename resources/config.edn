@@ -1,10 +1,21 @@
-{:comms {:kafka {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
-                                 :production "master.mesos"}
-                 :zk-path #profile {:development #or [#env ZK_PATH "/"]
-                                    :production "/dcos-service-kafka/"}
-                 :port 2181
-                 :topics {:command #or [#env COMMAND_TOPIC "command"]
-                          :event #or [#env EVENT_TOPIC "event"]}}}
+{:comms {:kinesis #profile {:development {:profile "dev"
+                                          :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                          :dynamodb-endpoint "http://localhost:8000"
+                                          :region "eu-central-1"
+                                          :stream-names {:command "witan-gateway-dev-command"
+                                                         :event "witan-gateway-dev-event"}}
+                            :staging {:profile "staging"
+                                      :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                      :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
+                                      :region "eu-central-1"
+                                      :stream-names {:command "witan-staging-command"
+                                                     :event "witan-staging-event"}}
+                            :production {:profile "production"
+                                         :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                         :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
+                                         :region "eu-central-1"
+                                         :stream-names {:command "witan-prod-command"
+                                                        :event "witan-prod-event"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                           :production "master.mesos"}
           :port 2181}
@@ -35,4 +46,7 @@
  :log {:level #profile {:development :info
                         :production  :info}
        :options {:stacktrace-fonts {}}}
- :downloads {:timeout 10000}}
+ :downloads {:timeout 10000}
+ :verbose-logging? #profile {:development true
+                             :production  false
+                             :staging true}}

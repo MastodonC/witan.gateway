@@ -4,7 +4,8 @@
             [aero.core :refer [read-config]]
             [kixi.log :as kixi-log]
             [taoensso.timbre :as timbre]
-            [kixi.comms.components.kafka :as kafka]
+            [kixi.comms :as comms]
+            [kixi.comms.components.kinesis :as kinesis]
             [witan.gateway.protocols :refer [process-event!]]
             [witan.gateway.components.server :refer [new-http-server]]
             [witan.gateway.components.metrics :refer [map->Metrics]]
@@ -22,13 +23,17 @@
     ;; logging config
     (timbre/set-config!
      (assoc log-config
-            :appenders (if (= profile :production)
+            :appenders (if (or (= profile :staging)
+                               (= profile :production))
                          {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")}
                          {:println (timbre/println-appender)})))
 
+    ;;
+    (comms/set-verbose-logging! (:verbose-logging? config))
+
     (component/system-map
      :auth        (new-authenticator (-> config :auth))
-     :comms       (kafka/map->Kafka (-> config :comms :kafka))
+     :comms       (kinesis/map->Kinesis (-> config :comms :kinesis))
      :downloads   (new-download-manager (-> config :downloads) (:directory config))
      :events      (component/using
                    (new-event-aggregator (-> config :events))

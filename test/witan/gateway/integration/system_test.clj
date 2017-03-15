@@ -41,7 +41,7 @@
                                                 {:kixi.comms.message/type "ping"
                                                  :kixi.comms.ping/id id
                                                  :kixi.comms.ping/created-at (timestamp)})))
-    (wait-for-pred (fn [] @ping?))
+    (wait-for-pred (constantly @ping?))
     (is @ping?)
     (is (not (contains? @ping? :error)) (pr-str @ping?))
     (is (= "pong" (:kixi.comms.message/type @ping?)) (pr-str @ping?))
@@ -66,7 +66,7 @@
                                   :kixi.comms.event/version "1.0.0"
                                   :kixi.comms.event/payload (assoc payload :bar 456)}))
     (ws/send-msg @wsconn (create-command :test/command1 "1.0.0" id payload))
-    (wait-for-pred (fn [] @result))
+    (wait-for-pred (constantly @result))
     (is @result)
     (is (= payload @result))))
 
@@ -96,7 +96,7 @@
                                (reset! result payload)
                                nil))
     (ws/send-msg @wsconn (create-command :test/command2 "1.0.0" id payload))
-    (wait-for-pred (fn [] @result))
+    (wait-for-pred (constantly @result))
     (is @result)
     (is (= fixed-payload @result))
     (is (= fixed-payload @fe-result))))
