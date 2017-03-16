@@ -2,7 +2,7 @@
  :comms {:kinesis #profile {:development {:profile "dev"
                                           :app ^:ref [:service-name]
                                           :endpoint "kinesis.eu-central-1.amazonaws.com"
-                                          :dynamodb-endpoint "http://localhost:8000"
+                                          :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "http://localhost:8000"]
                                           :region-name "eu-central-1"
                                           :metric-level :NONE
                                           :failover-time-millis 200
