@@ -143,7 +143,7 @@
     (is (= 401 (:status r)))))
 
 (deftest download
-  (println "Downloading" @file-id)
+  (println "Downloading" @file-id (download-url @file-id))
   (let [r (http/get (download-url @file-id)
                     {:throw-exceptions false
                      :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
