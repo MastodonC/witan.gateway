@@ -25,7 +25,7 @@
      (assoc log-config
             :appenders (if (or (= profile :staging)
                                (= profile :production))
-                         {:direct-json (kixi-log/timbre-appender-logstash "witan.gateway")}
+                         {:direct-json (kixi-log/timbre-appender-logstash)}
                          {:println (timbre/println-appender)})))
 
     ;;
@@ -56,7 +56,7 @@
     (Thread/setDefaultUncaughtExceptionHandler
      (reify Thread$UncaughtExceptionHandler
        (uncaughtException [_ thread ex]
-         (timbre/error "Unhandled exception:" ex))))
+         (timbre/error ex "Unhandled exception:" (.getMessage ex)))))
 
     (component/start
      (new-system profile))))
