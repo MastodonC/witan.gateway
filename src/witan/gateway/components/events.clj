@@ -28,11 +28,11 @@
           seq-name (zk/create-all zk "/kixi/gateway/events/consumer-" :sequential? true)
           consumer-name (clojure.string/replace (subs seq-name 1) #"/" "-")
           receivers (atom #{})
-          eh 1 #_(c/attach-event-with-key-handler!
-                  (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
-                  consumer-name
-                  :kixi.comms.command/id
-                  (partial handle-events receivers))]
+          eh (c/attach-event-with-key-handler!
+              (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
+              consumer-name
+              :kixi.comms.command/id
+              (partial handle-events receivers))]
       (log/info "Using consumer group:" consumer-name)
       (zk/close zk)
       (assoc component

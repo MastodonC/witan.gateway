@@ -1,21 +1,37 @@
-{:comms {:kinesis #profile {:development {:profile "dev"
-                                          :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+{:service-name "witan.gateway"
+ :comms {:kinesis #profile {:development {:profile "dev"
+                                          :app ^:ref [:service-name]
+                                          :endpoint "kinesis.eu-central-1.amazonaws.com"
                                           :dynamodb-endpoint "http://localhost:8000"
-                                          :region "eu-central-1"
-                                          :stream-names {:command "witan-gateway-dev-command"
-                                                         :event "witan-gateway-dev-event"}}
+                                          :region-name "eu-central-1"
+                                          :metric-level :NONE
+                                          :failover-time-millis 200
+                                          :idle-time-between-reads-in-millis 200
+                                          :max-records 1
+                                          :streams {:command #or [#env COMMAND_STREAM "gateway-dev-command"]
+                                                    :event #or [#env EVENT_STREAM "gateway-dev-event"]}}
                             :staging {:profile "staging"
+                                      :app ^:ref [:service-name]
                                       :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
                                       :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
-                                      :region "eu-central-1"
-                                      :stream-names {:command "witan-staging-command"
-                                                     :event "witan-staging-event"}}
+                                      :region-name "eu-central-1"
+                                      :metric-level :NONE
+                                      :failover-time-millis 200
+                                      :idle-time-between-reads-in-millis 200
+                                      :max-records 1
+                                      :streams {:command "witan-staging-command"
+                                                :event "witan-staging-event"}}
                             :production {:profile "production"
+                                         :app ^:ref [:service-name]
                                          :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
                                          :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
-                                         :region "eu-central-1"
-                                         :stream-names {:command "witan-prod-command"
-                                                        :event "witan-prod-event"}}}}
+                                         :region-name "eu-central-1"
+                                         :metric-level :NONE
+                                         :failover-time-millis 200
+                                         :idle-time-between-reads-in-millis 200
+                                         :max-records 1
+                                         :streams {:command "witan-prod-command"
+                                                   :event "witan-prod-event"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                           :production "master.mesos"}
           :port 2181}
