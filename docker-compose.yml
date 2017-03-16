@@ -2,17 +2,13 @@ zookeeper:
         image: 'jplock/zookeeper:3.4.6'
         ports:
           - '2181:2181'
-kafka:
-        image: 'ches/kafka:0.10.1.0'
-        links:
-          - zookeeper:zookeeper
-        ports:
-          - "9092:9092"
+
 elasticsearch:
         image: 'elasticsearch:2.4.1'
         ports:
           - "9200:9200"
           - "9300:9300"
+
 dynamodb:
         image: rajatvig/dynalite-alpine
         ports:
@@ -24,25 +20,32 @@ datastore:
         ports:
           - "8080:8080"
         volumes_from:
-          - "zookeeper"
-          - "kafka"
           - "elasticsearch"
+          - "dynamodb"
         links:
           - zookeeper:zookeeper
           - elasticsearch:elasticsearch
+          - dynamodb:dynamodb
         environment:
           - CONFIG_PROFILE=local
           - ZOOKEEPER=zookeeper
           - ELASTICSEARCH=elasticsearch
+          - DYNAMODB=http://dynamodb:8000
+          - COMMAND_STREAM=witan-dev-command
+          - EVENT_STREAM=witan-dev-event
+        env_file:
+          - aws-variables.env
+
 heimdall:
         image: 'mastodonc/kixi.heimdall-dev:latest'
         ports:
           - "3002:3002"
         volumes_from:
-          - "zookeeper"
-          - "kafka"
+          - "dynamodb"
         links:
           - zookeeper:zookeeper
           - dynamodb:dynamodb
         environment:
           - ZOOKEEPER=zookeeper
+        env_file:
+          - aws-variables.env

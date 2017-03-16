@@ -14,6 +14,11 @@
 (def wsconn (atom nil))
 (def received-fn (atom nil))
 
+(defn set-receiver-fn!
+  [fn name]
+  (log/info "Setting receiver fn token:" name)
+  (reset! received-fn fn))
+
 (use-fixtures :once (partial cycle-system-fixture system))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
 
@@ -36,12 +41,12 @@
 (deftest submit-ping-command-test
   (let [ping? (atom nil)
         id (uuid)]
-    (reset! received-fn #(reset! ping? %))
+    (set-receiver-fn! #(reset! ping? %) "submit-ping-command-test")
     (ws/send-msg @wsconn (transit-encode (merge token
                                                 {:kixi.comms.message/type "ping"
                                                  :kixi.comms.ping/id id
                                                  :kixi.comms.ping/created-at (timestamp)})))
-    (wait-for-pred (fn [] @ping?))
+    (wait-for-pred #(deref ping?))
     (is @ping?)
     (is (not (contains? @ping? :error)) (pr-str @ping?))
     (is (= "pong" (:kixi.comms.message/type @ping?)) (pr-str @ping?))
@@ -66,7 +71,7 @@
                                   :kixi.comms.event/version "1.0.0"
                                   :kixi.comms.event/payload (assoc payload :bar 456)}))
     (ws/send-msg @wsconn (create-command :test/command1 "1.0.0" id payload))
-    (wait-for-pred (fn [] @result))
+    (wait-for-pred #(deref result))
     (is @result)
     (is (= payload @result))))
 
@@ -77,7 +82,7 @@
         comms  (:comms @system)
         payload {:foo 123}
         fixed-payload (assoc payload :bar 456)]
-    (reset! received-fn #(reset! fe-result (:kixi.comms.event/payload %)))
+    (set-receiver-fn! #(reset! fe-result (:kixi.comms.event/payload %)) "submit-command->event-rountrip-test")
     (log/info "Submit Command->Event Roundtrip Test")
     (c/attach-command-handler! comms
                                :submit-command-test-2
@@ -96,7 +101,7 @@
                                (reset! result payload)
                                nil))
     (ws/send-msg @wsconn (create-command :test/command2 "1.0.0" id payload))
-    (wait-for-pred (fn [] @result))
+    (wait-for-pred #(deref result))
     (is @result)
     (is (= fixed-payload @result))
     (is (= fixed-payload @fe-result))))

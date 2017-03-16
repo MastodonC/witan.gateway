@@ -1,10 +1,37 @@
-{:comms {:kafka {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
-                                 :production "master.mesos"}
-                 :zk-path #profile {:development #or [#env ZK_PATH "/"]
-                                    :production "/dcos-service-kafka/"}
-                 :port 2181
-                 :topics {:command #or [#env COMMAND_TOPIC "command"]
-                          :event #or [#env EVENT_TOPIC "event"]}}}
+{:service-name "witan.gateway"
+ :comms {:kinesis #profile {:development {:profile "dev"
+                                          :app ^:ref [:service-name]
+                                          :endpoint "kinesis.eu-central-1.amazonaws.com"
+                                          :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "http://localhost:8000"]
+                                          :region-name "eu-central-1"
+                                          :metric-level :NONE
+                                          :failover-time-millis 200
+                                          :idle-time-between-reads-in-millis 200
+                                          :max-records 1
+                                          :streams {:command #or [#env COMMAND_STREAM "witan-dev-command"]
+                                                    :event #or [#env EVENT_STREAM "witan-dev-event"]}}
+                            :staging {:profile "staging"
+                                      :app ^:ref [:service-name]
+                                      :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                      :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
+                                      :region-name "eu-central-1"
+                                      :metric-level :NONE
+                                      :failover-time-millis 200
+                                      :idle-time-between-reads-in-millis 200
+                                      :max-records 1
+                                      :streams {:command "witan-staging-command"
+                                                :event "witan-staging-event"}}
+                            :production {:profile "production"
+                                         :app ^:ref [:service-name]
+                                         :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                         :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
+                                         :region-name "eu-central-1"
+                                         :metric-level :NONE
+                                         :failover-time-millis 200
+                                         :idle-time-between-reads-in-millis 200
+                                         :max-records 1
+                                         :streams {:command "witan-prod-command"
+                                                   :event "witan-prod-event"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                           :production "master.mesos"}
           :port 2181}
@@ -35,4 +62,7 @@
  :log {:level #profile {:development :info
                         :production  :info}
        :options {:stacktrace-fonts {}}}
- :downloads {:timeout 10000}}
+ :downloads {:timeout 10000}
+ :verbose-logging? #profile {:development true
+                             :production  false
+                             :staging true}}

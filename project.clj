@@ -1,7 +1,7 @@
 (def metrics-version "2.7.0")
 (defproject witan.gateway "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
-  :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/core.async "0.2.371"]
                  [org.clojure/data.codec "0.1.0"]
                  [com.stuartsierra/component "0.3.1"]
@@ -18,7 +18,7 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.1.27"]
+                 [kixi/kixi.comms "0.2.2"]
                  [kixi/kixi.log "0.1.3"]
                  [kixi/kixi.metrics "0.4.0"]
                  [metrics-clojure ~metrics-version]
