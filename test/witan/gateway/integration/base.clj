@@ -48,8 +48,8 @@
                   [(kinesis/event-worker-app-name (:app kinesis) (:profile kinesis))
                    (kinesis/command-worker-app-name (:app kinesis) (:profile kinesis))])
 
-    (log/info "Deleting streams...")
-    (kinesis/delete-streams! (:endpoint kinesis) (vals (:streams kinesis)))))
+    #_(log/info "Deleting streams...")
+    #_(kinesis/delete-streams! (:endpoint kinesis) (vals (:streams kinesis)))))
 
 (defn cycle-system-fixture
   [a all-tests]

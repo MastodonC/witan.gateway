@@ -30,6 +30,7 @@ datastore:
           - CONFIG_PROFILE=local
           - ZOOKEEPER=zookeeper
           - ELASTICSEARCH=elasticsearch
+          - DYNAMODB=http://dynamodb:8000
           - COMMAND_STREAM=witan-dev-command
           - EVENT_STREAM=witan-dev-event
         env_file:

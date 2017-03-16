@@ -8,8 +8,8 @@
                                           :failover-time-millis 200
                                           :idle-time-between-reads-in-millis 200
                                           :max-records 1
-                                          :streams {:command #or [#env COMMAND_STREAM "gateway-dev-command"]
-                                                    :event #or [#env EVENT_STREAM "gateway-dev-event"]}}
+                                          :streams {:command #or [#env COMMAND_STREAM "witan-dev-command"]
+                                                    :event #or [#env EVENT_STREAM "witan-dev-event"]}}
                             :staging {:profile "staging"
                                       :app ^:ref [:service-name]
                                       :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"

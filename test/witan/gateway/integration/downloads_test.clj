@@ -92,6 +92,7 @@
               :download-test-upload-link-created
               :kixi.datastore.filestore/upload-link-created "1.0.0"
               (fn [{:keys [kixi.comms.command/id] :as event}]
+                (log/info "Event received: :kixi.datastore.filestore/upload-link-created")
                 (when (= id cid)
                   (upload-file-to-correct-location comms user test-file-contents event))))
              (c/attach-event-handler!
@@ -104,17 +105,19 @@
              (c/attach-event-handler!
               adjusted-comms
               :download-test-file-metadata-created
-              :kixi.datastore.file/created "1.0.0"
+              :kixi.datastore.file-metadata/updated "1.0.0"
               (fn [{:keys [kixi.comms.event/payload kixi.comms.command/id] :as event}]
                 (when (= id cid)
-                  (let [{:keys [kixi.datastore.metadatastore/id]} payload]
+                  (let [id (get-in payload [:kixi.datastore.metadatastore/file-metadata
+                                            :kixi.datastore.metadatastore/id])]
                     (reset! file-id-atom id)))
                 nil))]]
-    (log/info "Handlers attached." )
+    (log/info "Handlers attached.")
     (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil {:id cid})
     (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
+    (log/info "File ID:" @file-id-atom)
     (if-not (clojure.string/blank? @file-id-atom)
       (all-tests)
       (throw (Exception. "Tests could not be run")))))
@@ -140,6 +143,7 @@
     (is (= 401 (:status r)))))
 
 (deftest download
+  (println "Downloading" @file-id)
   (let [r (http/get (download-url @file-id)
                     {:throw-exceptions false
                      :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
