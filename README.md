@@ -11,6 +11,7 @@ java -jar target/witan.gateway-standalone.jar
 ```
 
 ### Development
+You will need AWS credentials in a file called 'aws-variables.env' alonside `docker-compose.yml`. There is a helper script in the `scripts` directory to duplicate AWS credentials from `.aws/credentials` into a correctly-formatted file.
 ```
 docker-compose pull
 docker-compose up
