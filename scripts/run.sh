@@ -9,4 +9,4 @@ SANDBOX=${MESOS_SANDBOX:-"."}
 
 export BIND_ADDR="${BIND_ADDR:-$(hostname --ip-address)}"
 export APP_NAME=$(echo "witan.gateway" | sed s/"-"/"_"/g)
-exec java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$SANDBOX -XX:+UseG1GC -Xloggc:$SANDBOX/gc.log -XX:+PrintGCCause -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=3 -XX:GCLogFileSize=2M ${JAVA_OPTS:-} -jar /srv/witan.gateway.jar
+exec java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$SANDBOX -XX:+UseG1GC -Xloggc:$SANDBOX/gc.log -XX:+PrintGCCause -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=3 -XX:GCLogFileSize=2M ${JAVA_OPTS:-} -jar /srv/witan.gateway.jar $ENVIRONMENT

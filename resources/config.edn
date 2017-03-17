@@ -12,7 +12,7 @@
                                                     :event #or [#env EVENT_STREAM "witan-dev-event"]}}
                             :staging {:profile "staging"
                                       :app ^:ref [:service-name]
-                                      :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                      :endpoint "kinesis.eu-central-1.amazonaws.com"
                                       :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                       :region-name "eu-central-1"
                                       :metric-level :NONE
@@ -23,7 +23,7 @@
                                                 :event "witan-staging-event"}}
                             :production {:profile "production"
                                          :app ^:ref [:service-name]
-                                         :kinesis-endpoint "kinesis.eu-central-1.amazonaws.com"
+                                         :endpoint "kinesis.eu-central-1.amazonaws.com"
                                          :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                          :region-name "eu-central-1"
                                          :metric-level :NONE
