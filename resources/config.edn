@@ -33,36 +33,43 @@
                                          :streams {:command "witan-prod-command"
                                                    :event "witan-prod-event"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+                          :staging "master.mesos"
                           :production "master.mesos"}
           :port 2181}
  :connections {}
  :webserver {:port 30015}
  :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
                                             "./test-resources/heimdall-dev_pubkey.pem"]
+                          :staging "/root/prod_pubkey.pem"
                           :production "/root/prod_pubkey.pem"}}
- :metrics {:json-reporter {:seconds #profile {:production 60
-                                              :development 300
-                                              :dev-docker 60
-                                              :test 60
-                                              :jenkins 60}}}
+ :metrics {:json-reporter {:seconds #profile {:development 300
+                                              :staging 60
+                                              :production 60}}}
  :directory {:workspace {:host #profile {:development "127.0.0.1"
+                                         :staging "witan-workspace.marathon.mesos"
                                          :production "witan-workspace.marathon.mesos"}
                          :port 20015}
              :data-acquisition {:host #profile {:development "127.0.0.1"
+                                                :staging "kixi-data-acquisition.marathon.mesos"
                                                 :production "kixi-data-acquisition.marathon.mesos"}
                                 :port 40015}
              :heimdall #profile {:development {:host #or [#env HEIMDALL_HOST "localhost"]
                                                :port #or [#env HEIMDALL_PORT 3002]}
+                                 :staging {:host "heimdall.marathon.mesos"
+                                           :port 10010}
                                  :production {:host "heimdall.marathon.mesos"
                                               :port 10010}}
              :datastore #profile {:development {:host #or [#env DATASTORE_HOST "localhost"]
                                                 :port #or [#env DATASTORE_PORT 8080]}
+                                  :staging {:host "kixi.datastore.marathon.mesos"
+                                            :port 18080}
                                   :production {:host "kixi.datastore.marathon.mesos"
                                                :port 18080}}}
  :log {:level #profile {:development :info
-                        :production  :info}
+                        :staging :info
+                        :production  :warn}
        :options {:stacktrace-fonts {}}}
  :downloads {:timeout 10000}
  :verbose-logging? #profile {:development true
-                             :production  false
-                             :staging true}}
+                             :staging true
+                             :production  false}}
