@@ -144,12 +144,18 @@
 
 (deftest download
   (println "Downloading" @file-id (download-url @file-id))
-  (let [r (http/get (download-url @file-id)
-                    {:throw-exceptions false
-                     :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
-                     :follow-redirects false})]
-    (is (= 302 (:status r)) (pr-str r))
-    (when-let [redirect (get-in r [:headers "Location"])]
-      (if (clojure.string/starts-with? redirect "file:")
-        (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
-        (is (= test-file-contents (slurp redirect)))))))
+  (loop [tries 10]
+    (let [r (http/get (download-url @file-id)
+                      {:throw-exceptions false
+                       :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
+                       :follow-redirects false})]
+      (if-not (and (= 302 (:status r) (pos? tries)))
+        (do
+          (Thread/sleep 500)
+          (recur (dec tries)))
+        (do
+          (is (= 302 (:status r)) (pr-str r))
+          (when-let [redirect (get-in r [:headers "Location"])]
+            (if (clojure.string/starts-with? redirect "file:")
+              (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
+              (is (= test-file-contents (slurp redirect))))))))))
