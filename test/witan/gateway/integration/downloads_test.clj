@@ -149,14 +149,15 @@
                       {:throw-exceptions false
                        :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
                        :follow-redirects false})]
-      (if-not (and (= 302 (:status r) (pos? tries)))
-        (do
-          (Thread/sleep 500)
-          (log/info "Download test failed. Trying" (dec tries) "more time(s)...")
-          (recur (dec tries)))
+      (if (or (= 302 (:status r))
+              (< tries 0))
         (do
           (is (= 302 (:status r)) (pr-str r))
           (when-let [redirect (get-in r [:headers "Location"])]
             (if (clojure.string/starts-with? redirect "file:")
               (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
-              (is (= test-file-contents (slurp redirect))))))))))
+              (is (= test-file-contents (slurp redirect))))))
+        (do
+          (Thread/sleep 500)
+          (log/info "Download test failed. Trying" (dec tries) "more time(s)...")
+          (recur (dec tries)))))))
