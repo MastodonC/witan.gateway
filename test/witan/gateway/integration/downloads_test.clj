@@ -152,6 +152,7 @@
       (if-not (and (= 302 (:status r) (pos? tries)))
         (do
           (Thread/sleep 500)
+          (log/info "Download test failed. Trying" (dec tries) "more time(s)...")
           (recur (dec tries)))
         (do
           (is (= 302 (:status r)) (pr-str r))
