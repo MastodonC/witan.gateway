@@ -5,8 +5,6 @@
                                           :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "http://localhost:8000"]
                                           :region-name "eu-central-1"
                                           :metric-level :NONE
-                                          :failover-time-millis 200
-                                          :idle-time-between-reads-in-millis 200
                                           :streams {:command #or [#env COMMAND_STREAM "witan-dev-command"]
                                                     :event #or [#env EVENT_STREAM "witan-dev-event"]}}
                             :staging {:profile "staging"
@@ -15,8 +13,6 @@
                                       :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                       :region-name "eu-central-1"
                                       :metric-level :NONE
-                                      :failover-time-millis 200
-                                      :idle-time-between-reads-in-millis 200
                                       :streams {:command "witan-staging-command"
                                                 :event "witan-staging-event"}}
                             :production {:profile "production"
@@ -25,8 +21,6 @@
                                          :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                          :region-name "eu-central-1"
                                          :metric-level :NONE
-                                         :failover-time-millis 200
-                                         :idle-time-between-reads-in-millis 200
                                          :streams {:command "witan-prod-command"
                                                    :event "witan-prod-event"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
