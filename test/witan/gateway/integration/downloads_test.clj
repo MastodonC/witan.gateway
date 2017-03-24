@@ -113,7 +113,8 @@
                     (reset! file-id-atom id)))
                 nil))]]
     (log/info "Handlers attached.")
-    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil {:id cid})
+    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil {:id cid
+                                                                                          :origin "witan.gateway-test"})
     (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
@@ -144,12 +145,20 @@
 
 (deftest download
   (println "Downloading" @file-id (download-url @file-id))
-  (let [r (http/get (download-url @file-id)
-                    {:throw-exceptions false
-                     :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
-                     :follow-redirects false})]
-    (is (= 302 (:status r)) (pr-str r))
-    (when-let [redirect (get-in r [:headers "Location"])]
-      (if (clojure.string/starts-with? redirect "file:")
-        (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
-        (is (= test-file-contents (slurp redirect)))))))
+  (loop [tries 10]
+    (let [r (http/get (download-url @file-id)
+                      {:throw-exceptions false
+                       :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
+                       :follow-redirects false})]
+      (if (or (= 302 (:status r))
+              (< tries 0))
+        (do
+          (is (= 302 (:status r)) (pr-str r))
+          (when-let [redirect (get-in r [:headers "Location"])]
+            (if (clojure.string/starts-with? redirect "file:")
+              (is (= test-file-contents (slurp-from-docker (subs redirect 7))))
+              (is (= test-file-contents (slurp redirect))))))
+        (do
+          (Thread/sleep 500)
+          (log/info "Download test failed. Trying" (dec tries) "more time(s)...")
+          (recur (dec tries)))))))
