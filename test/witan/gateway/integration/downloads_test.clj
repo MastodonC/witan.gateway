@@ -117,7 +117,7 @@
     (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil
                      {:kixi.comms.command/id cid
                       :origin "witan.gateway-test"})
-    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
+    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link with command ID" cid)
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
     (log/info "File ID:" @file-id-atom)
