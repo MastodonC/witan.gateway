@@ -76,32 +76,44 @@
     (is (= payload @result))))
 
 (deftest submit-command->event-rountrip-test
-  (let [result (atom nil)
-        fe-result (atom nil)
+  (let [result (atom [])
+        fe-result (atom [])
         id     (uuid)
         comms  (:comms @system)
         payload {:foo 123}
         fixed-payload (assoc payload :bar 456)]
-    (set-receiver-fn! #(reset! fe-result (:kixi.comms.event/payload %)) "submit-command->event-rountrip-test")
+    (set-receiver-fn! #(swap! fe-result conj (:kixi.comms.event/payload %)) "submit-command->event-rountrip-test")
     (log/info "Submit Command->Event Roundtrip Test")
     (c/attach-command-handler! comms
                                :submit-command-test-2
                                :test/command2
                                "1.0.0"
                                (fn [{:keys [kixi.comms.command/payload]}]
-                                 {:kixi.comms.message/type "event"
-                                  :kixi.comms.event/key :test/command-received-2
-                                  :kixi.comms.event/version "1.0.0"
-                                  :kixi.comms.event/payload (assoc payload :bar 456)}))
+                                 [{:kixi.comms.message/type "event"
+                                   :kixi.comms.event/key :test/command-received-2a
+                                   :kixi.comms.event/version "1.0.0"
+                                   :kixi.comms.event/payload (assoc payload :bar 456)}
+                                  {:kixi.comms.message/type "event"
+                                   :kixi.comms.event/key :test/command-received-2b
+                                   :kixi.comms.event/version "1.0.0"
+                                   :kixi.comms.event/payload (assoc payload :bar 456)}]))
     (c/attach-event-handler! comms
                              :submit-command-test-3
-                             :test/command-received-2
+                             :test/command-received-2a
                              "1.0.0"
                              (fn [{:keys [kixi.comms.event/payload]}]
-                               (reset! result payload)
+                               (swap! result conj payload)
+                               nil))
+    (c/attach-event-handler! comms
+                             :submit-command-test-3
+                             :test/command-received-2b
+                             "1.0.0"
+                             (fn [{:keys [kixi.comms.event/payload]}]
+                               (swap! result conj payload)
                                nil))
     (ws/send-msg @wsconn (create-command :test/command2 "1.0.0" id payload))
-    (wait-for-pred #(deref result))
+    (wait-for-pred #(and (deref result)
+                         (= (count (deref result)) 2)))
     (is @result)
-    (is (= fixed-payload @result))
-    (is (= fixed-payload @fe-result))))
+    (is (every? #{fixed-payload} @result))
+    (is (every? #{fixed-payload} @fe-result))))

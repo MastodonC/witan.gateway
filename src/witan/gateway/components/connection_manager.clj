@@ -29,8 +29,7 @@
     (log/info "Added connection. Total:" (count @channels)))
   (remove-connection! [{:keys [channels receipts]} connection]
     (swap! channels #(remove #{connection} %))
-    (swap! receipts update (fn [rs]
-                             (into {} (remove #(= connection (:ch %)) rs))))
+    (swap! receipts (fn [rs] (remove #(= connection (:ch %)) rs)))
     (log/info "Removed connection. Total:" (count @channels)))
   (add-receipt! [{:keys [receipts]} channel receipt-id callback]
     (swap! receipts assoc (str receipt-id) {:cb callback
