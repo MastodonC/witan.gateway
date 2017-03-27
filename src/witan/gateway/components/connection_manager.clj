@@ -21,18 +21,21 @@
             (do
               (log/info "Sending event" (:kixi.comms.event/id event) "back to client")
               (cb event)
-              (swap! receipts dissoc id)
               nil)))
         (catch Exception e
           (log/error "Error whilst processing an event:" event e)))))
   (add-connection! [{:keys [channels]} connection]
     (swap! channels conj connection)
     (log/info "Added connection. Total:" (count @channels)))
-  (remove-connection! [{:keys [channels]} connection]
+  (remove-connection! [{:keys [channels receipts]} connection]
     (swap! channels #(remove #{connection} %))
+    (swap! receipts update (fn [rs]
+                             (into {} (remove #(= connection (:ch %)) rs))))
     (log/info "Removed connection. Total:" (count @channels)))
-  (add-receipt! [{:keys [receipts]} cb id]
-    (swap! receipts assoc (str id) {:cb cb :at (t/now)}))
+  (add-receipt! [{:keys [receipts]} channel receipt-id callback]
+    (swap! receipts assoc (str receipt-id) {:cb callback
+                                            :ch channel
+                                            :at (t/now)}))
 
   component/Lifecycle
   (start [{:keys [comms events] :as component}]

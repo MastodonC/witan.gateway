@@ -7,7 +7,7 @@
 
 (defprotocol ManageConnections
   (process-event! [this event])
-  (add-receipt! [this cb id])
+  (add-receipt! [this channel receipt-id callback])
   (add-connection! [this connection])
   (remove-connection! [this connection]))
 ;;;;;;;;;
