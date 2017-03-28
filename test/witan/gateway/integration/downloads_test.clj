@@ -77,7 +77,8 @@
         (cp-to-docker tmpfile (subs upload-link 7))
         (put-to-aws tmpfile upload-link))
       (Thread/sleep 300)
-      (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata {:id (:kixi.comms.command/id event)})
+      (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata
+                       {:kixi.comms.command/id (:kixi.comms.command/id event)})
       nil)))
 
 (defn upload-file
@@ -92,7 +93,7 @@
               :download-test-upload-link-created
               :kixi.datastore.filestore/upload-link-created "1.0.0"
               (fn [{:keys [kixi.comms.command/id] :as event}]
-                (log/info "Event received: :kixi.datastore.filestore/upload-link-created")
+                (log/info "Event received: :kixi.datastore.filestore/upload-link-created. " event id cid)
                 (when (= id cid)
                   (upload-file-to-correct-location comms user test-file-contents event))))
              (c/attach-event-handler!
@@ -113,9 +114,10 @@
                     (reset! file-id-atom id)))
                 nil))]]
     (log/info "Handlers attached.")
-    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil {:id cid
-                                                                                          :origin "witan.gateway-test"})
-    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link" )
+    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil
+                     {:kixi.comms.command/id cid
+                      :origin "witan.gateway-test"})
+    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link with command ID" cid)
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)
     (log/info "File ID:" @file-id-atom)

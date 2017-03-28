@@ -108,7 +108,7 @@
               kixi.comms.command/version
               kixi.comms.command/created-at
               kixi.comms.command/payload] :as command} user {:keys [comms connections]}]
-  (p/add-receipt! connections (partial dispatch-event! ch id) id)
+  (p/add-receipt! connections ch id dispatch-event!)
   (log/info "Forwarding command" key version id)
   (comms/send-command! comms key version user payload {:id id
                                                        :created-at created-at}))
