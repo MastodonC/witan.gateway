@@ -59,7 +59,7 @@
     (all-tests)
     (finally
       (repl/stop)
-      #_(tear-down-kinesis! @a)
+      (tear-down-kinesis! @a)
       (reset! a nil))))
 
 (defn create-ws-connection
