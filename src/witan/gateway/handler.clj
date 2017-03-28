@@ -110,7 +110,7 @@
               kixi.comms.command/payload] :as command} user {:keys [comms connections]}]
   (p/add-receipt! connections ch id dispatch-event!)
   (log/info "Forwarding command" key version id)
-  (comms/send-command! comms key version user payload {:id id
+  (comms/send-command! comms key version user payload {:kixi.comms.command/id id
                                                        :created-at created-at}))
 
 (defmethod handle-message
