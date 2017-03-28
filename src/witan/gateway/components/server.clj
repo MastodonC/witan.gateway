@@ -68,7 +68,7 @@
                                (wrap-params)
                                (wrap-directory directory)
                                (wrap-components this)
-                               (wrap-log)
+                               ;;(wrap-log)
                                (wrap-per-resource-metrics (:metrics this))
                                (wrap-cors :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :post]))
