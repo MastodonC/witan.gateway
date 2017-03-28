@@ -13,14 +13,16 @@
                                       :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                       :region-name "eu-central-1"
                                       :metric-level :NONE
-                                      :streams {:event "witan-staging-event"}}
+                                      :streams {:event "witan-staging-event"
+                                                :command "witan-staging-command"}}
                             :production {:profile "production"
                                          :app ^:ref [:service-name]
                                          :endpoint "kinesis.eu-central-1.amazonaws.com"
                                          :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                          :region-name "eu-central-1"
                                          :metric-level :NONE
-                                         :streams {:event "witan-prod-event"}}}}
+                                         :streams {:event "witan-prod-event"
+                                                   :command "witan-prod-command"}}}}
  :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
                           :staging "master.mesos"
                           :production "master.mesos"}
