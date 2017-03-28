@@ -93,7 +93,7 @@
               :download-test-upload-link-created
               :kixi.datastore.filestore/upload-link-created "1.0.0"
               (fn [{:keys [kixi.comms.command/id] :as event}]
-                (log/info "Event received: :kixi.datastore.filestore/upload-link-created")
+                (log/info "Event received: :kixi.datastore.filestore/upload-link-created. " event id cid)
                 (when (= id cid)
                   (upload-file-to-correct-location comms user test-file-contents event))))
              (c/attach-event-handler!
