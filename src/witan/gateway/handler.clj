@@ -230,7 +230,7 @@
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
-  (GET "/health" [] (str "hello"))
+  (GET "/healthcheck" [] (str "hello"))
   (GET "/download" req (download req))
   (POST "/signup" req (signup req))
   (POST "/login" req (login req)))
