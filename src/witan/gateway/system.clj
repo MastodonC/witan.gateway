@@ -19,7 +19,6 @@
   (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})
         log-config (assoc (:log config)
                           :timestamp-opts kixi-log/default-timestamp-opts)]
-    (log/info "Starting system with profile:" profile)
 
     ;; logging config
     (timbre/set-config!
@@ -28,6 +27,9 @@
                                (= profile :production))
                          {:direct-json (kixi-log/timbre-appender-logstash)}
                          {:println (timbre/println-appender)})))
+
+    ;;
+    (timbre/info "Starting system with profile:" profile)
 
     ;;
     (comms/set-verbose-logging! (:verbose-logging? config))
