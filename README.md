@@ -23,6 +23,8 @@ To add some user data, you should check out the `kixi.heimdall` project and run
 lein seed development
 ```
 
+### Issues
+
 ## License
 
 Copyright © MastodonC Ltd
