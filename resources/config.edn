@@ -54,7 +54,7 @@
                                          :production "witan-workspace.marathon.mesos"}
                          :port 20015}
              :data-acquisition {:host #profile {:development "127.0.0.1"
-                                                :staging-jenkins "127.0.0.1"
+                                                :staging-jenkins "kixi-data-acquisition.marathon.mesos"
                                                 :staging "kixi-data-acquisition.marathon.mesos"
                                                 :production "kixi-data-acquisition.marathon.mesos"}
                                 :port 40015}
