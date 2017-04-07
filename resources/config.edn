@@ -49,7 +49,7 @@
                                               :staging 60
                                               :production 60}}}
  :directory {:workspace {:host #profile {:development "127.0.0.1"
-                                         :staging-jenkins "127.0.0.1"
+                                         :staging-jenkins "witan-workspace.marathon.mesos"
                                          :staging "witan-workspace.marathon.mesos"
                                          :production "witan-workspace.marathon.mesos"}
                          :port 20015}
