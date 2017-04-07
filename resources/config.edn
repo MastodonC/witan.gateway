@@ -7,6 +7,14 @@
                                           :metric-level :NONE
                                           :streams {:event #or [#env EVENT_STREAM "witan-dev-event"]
                                                     :command #or [#env COMMAND_STREAM "witan-dev-command"]}}
+                            :staging-jenkins {:profile "staging-jenkins"
+                                              :app ^:ref [:service-name]
+                                              :endpoint "kinesis.eu-central-1.amazonaws.com"
+                                              :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "http://localhost:8000"]
+                                              :region-name "eu-central-1"
+                                              :metric-level :NONE
+                                              :streams {:event #or [#env EVENT_STREAM "staging-witan-event"]
+                                                        :command #or [#env COMMAND_STREAM "staging-witan-command"]}}
                             :staging {:profile "staging"
                                       :app ^:ref [:service-name]
                                       :endpoint "kinesis.eu-central-1.amazonaws.com"
