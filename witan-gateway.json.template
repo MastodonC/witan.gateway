@@ -7,6 +7,8 @@
       "parameters": [
          {"key": "env", "value": "ENVIRONMENT=@@ENVIRONMENT@@"},
          {"key": "env", "value": "JAVA_OPTS=@@JAVA_OPTS@@"},
+         {"key": "env", "value": "SECRETS_BUCKET=@@SECRETS_BUCKET@@"},
+         {"key": "env", "value": "AWS_REGION=@@AWS_REGION@@"},
          {"key": "label", "value": "cluster=@@ENVIRONMENT@@"},
          {"key": "label", "value": "application=witan-gateway"}
       ],
