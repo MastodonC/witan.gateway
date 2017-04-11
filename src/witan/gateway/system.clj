@@ -24,11 +24,10 @@
     (timbre/set-config!
      (assoc log-config
             :appenders (if (or (= profile :staging)
-                               (= profile :production))
+                               (= profile :prod))
                          {:direct-json (kixi-log/timbre-appender-logstash)}
                          {:println (timbre/println-appender)})))
 
-    ;;
     (comms/set-verbose-logging! (:verbose-logging? config))
 
     (component/system-map
@@ -50,7 +49,7 @@
                    [:connections :comms :queries :auth :downloads :metrics]))))
 
 (defn -main [& [arg]]
-  (let [profile (or (keyword arg) :production)]
+  (let [profile (or (keyword arg) :staging)]
 
     ;; https://stuartsierra.com/2015/05/27/clojure-uncaught-exceptions
     (Thread/setDefaultUncaughtExceptionHandler
