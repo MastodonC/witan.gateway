@@ -64,7 +64,7 @@
                                                    :port 10010}
                                  :staging {:host "heimdall.marathon.mesos"
                                            :port 10010}
-                                 :prod {:host "heimdall.marathon.mesos"
+                                 :prod {:host "kixi.heimdall.marathon.mesos"
                                         :port 10010}}
              :datastore #profile {:development {:host #or [#env DATASTORE_HOST "localhost"]
                                                 :port #or [#env DATASTORE_PORT 8080]}
