@@ -60,9 +60,9 @@
                                 :port 40015}
              :heimdall #profile {:development {:host #or [#env HEIMDALL_HOST "localhost"]
                                                :port #or [#env HEIMDALL_PORT 3002]}
-                                 :staging-jenkins {:host "heimdall.marathon.mesos"
+                                 :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
-                                 :staging {:host "heimdall.marathon.mesos"
+                                 :staging {:host "kixi.heimdall.marathon.mesos"
                                            :port 10010}
                                  :prod {:host "kixi.heimdall.marathon.mesos"
                                         :port 10010}}
