@@ -40,6 +40,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
 
+(defn decode-params
+  [params]
+  (if (and params (or (= (type params) ByteArrayInputStream)
+                      (= (type params) org.httpkit.BytesInputStream)))
+    (transit-decode-bytes params)
+    params))
+
 (defn send-outbound!
   [ch m]
   (let [o (transit-encode m)]
@@ -63,11 +70,8 @@
 (defn post-to-heimdall
   ([components path]
    (post-to-heimdall components path nil))
-  ([components path params']
-   (let [params (if (and params' (or (= (type params') ByteArrayInputStream)
-                                     (= (type params') org.httpkit.BytesInputStream)))
-                  (transit-decode-bytes params')
-                  params')
+  ([components path p]
+   (let [params (decode-params p)
          {:keys [host port]} (get-in components [:directory :heimdall])
          heimdall-url (str "http://" host ":" port "/" path)
          r (http/post heimdall-url
@@ -227,10 +231,29 @@
       {:status 401
        :body "Unauthorized"})))
 
+(defn request-password-reset
+  [req]
+  (let [comms    (get-in req [:components :comms])
+        username (:username (decode-params (:body req)))]
+    (if (clojure.string/blank? username)
+      {:status 400 :body (transit-encode "No username?")}
+      (do
+        (comms/send-command! comms
+                             :kixi.heimdall/create-password-reset-request
+                             "1.0.0"
+                             nil
+                             {:username username})
+        {:status 201 :body (transit-encode "OK")}))))
+
+(defn complete-password-reset
+  [req]
+  (post-to-heimdall req "reset-password" (:body req)))
 
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/healthcheck" [] (str "hello"))
   (GET "/download" req (download req))
   (POST "/signup" req (signup req))
-  (POST "/login" req (login req)))
+  (POST "/login" req (login req))
+  (POST "/reset" req (request-password-reset req))
+  (POST "/complete-reset" req (complete-password-reset req)))
