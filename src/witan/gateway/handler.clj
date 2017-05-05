@@ -245,10 +245,15 @@
                              {:username username})
         {:status 201 :body (transit-encode "OK")}))))
 
+(defn complete-password-reset
+  [req]
+  (post-to-heimdall req "reset-password" (:body req)))
+
 (defroutes app
   (GET "/ws" req (ws-handler req))
   (GET "/healthcheck" [] (str "hello"))
   (GET "/download" req (download req))
   (POST "/signup" req (signup req))
   (POST "/login" req (login req))
-  (POST "/reset" req (request-password-reset req)))
+  (POST "/reset" req (request-password-reset req))
+  (POST "/complete-reset" req (complete-password-reset req)))
