@@ -43,8 +43,8 @@
 (defn decode-params
   [params]
   (if (and params (or (= (type params) ByteArrayInputStream)
-                      (= (type params) org.httpkit.BytesInputStream))
-           (transit-decode-bytes params))
+                      (= (type params) org.httpkit.BytesInputStream)))
+    (transit-decode-bytes params)
     params))
 
 (defn send-outbound!
@@ -70,8 +70,8 @@
 (defn post-to-heimdall
   ([components path]
    (post-to-heimdall components path nil))
-  ([components path params]
-   (let [params' (decode-params params)
+  ([components path p]
+   (let [params (decode-params p)
          {:keys [host port]} (get-in components [:directory :heimdall])
          heimdall-url (str "http://" host ":" port "/" path)
          r (http/post heimdall-url
@@ -79,7 +79,7 @@
                        :accept :json
                        :throw-exceptions false
                        :as :json
-                       :form-params params'})]
+                       :form-params params})]
      (if (= 201 (:status r))
        (update r :body transit-encode)
        {:status (:status r)
