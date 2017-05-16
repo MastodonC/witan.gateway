@@ -11,7 +11,6 @@
             [kixi.comms :as comms]
             [kixi.comms.time :refer [timestamp]]
             [cognitect.transit :as tr]
-            [cheshire.core :as json]
             [clojure.java.io :as io]
             [clojure.data.codec.base64 :as b64])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
@@ -71,19 +70,24 @@
   ([components path]
    (post-to-heimdall components path nil))
   ([components path p]
-   (let [params (decode-params p)
-         {:keys [host port]} (get-in components [:directory :heimdall])
-         heimdall-url (str "http://" host ":" port "/" path)
-         r (http/post heimdall-url
-                      {:content-type :json
-                       :accept :json
-                       :throw-exceptions false
-                       :as :json
-                       :form-params params})]
-     (if (= 201 (:status r))
-       (update r :body transit-encode)
-       {:status (:status r)
-        :body (transit-encode {:witan.gateway/error (:body r)})}))))
+   (try
+     (let [params (decode-params p)
+           {:keys [host port]} (get-in components [:directory :heimdall])
+           heimdall-url (str "http://" host ":" port "/" path)
+           r (http/post heimdall-url
+                        {:content-type :transit+json
+                         :accept :transit+json
+                         :throw-exceptions false
+                         :as :transit+json
+                         :form-params params})]
+       (if (= 201 (:status r))
+         (update r :body transit-encode)
+         {:status (:status r)
+          :body (transit-encode {:witan.gateway/error (:body r)})}))
+     (catch com.fasterxml.jackson.core.JsonParseException e
+       (log/error e)
+       {:status 500
+        :body (transit-encode {:witan.gateway/error (.getMessage e)})}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Handling

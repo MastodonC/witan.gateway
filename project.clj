@@ -7,7 +7,6 @@
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/timbre "4.8.0"]
                  [com.cognitect/transit-clj "0.8.290"]
-                 [cheshire "5.6.3"]
                  [clj-time "0.11.0"]
                  [http-kit "2.1.19"]
                  [ring-cors "0.1.8"]

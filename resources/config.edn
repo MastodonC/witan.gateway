@@ -2,7 +2,7 @@
  :comms {:kinesis #profile {:development {:profile "dev"
                                           :app ^:ref [:service-name]
                                           :endpoint "kinesis.eu-central-1.amazonaws.com"
-                                          :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "http://localhost:8000"]
+                                          :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "dynamodb.eu-central-1.amazonaws.com"]
                                           :region-name "eu-central-1"
                                           :metric-level :NONE
                                           :streams {:event #or [#env EVENT_STREAM "witan-dev-event"]
