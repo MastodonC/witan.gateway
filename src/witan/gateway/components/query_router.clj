@@ -2,7 +2,6 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [witan.gateway.protocols    :as p :refer [RouteQuery]]
-            [clj-http.client            :as client]
             ;;
             [witan.gateway.queries.data-acquisition :as qda]
             [witan.gateway.queries.workspace :as qw]
@@ -10,14 +9,14 @@
             [witan.gateway.queries.heimdall :as qh]))
 
 (def functions
-  {:workspace/list-by-owner qw/get-workspaces-by-owner
-   :workspace/by-id         qw/get-workspace-by-id
+  {;;:workspace/list-by-owner qw/get-workspaces-by-owner
+   ;;:workspace/by-id         qw/get-workspace-by-id
 
-   :workspace/available-models          qw/get-available-models
-   :workspace/model-by-name-and-version qw/get-model-by-name-and-version
+   ;;:workspace/available-models          qw/get-available-models
+   ;;:workspace/model-by-name-and-version qw/get-model-by-name-and-version
 
-   :data-acquisition/requests-by-requester qda/requests-by-requester
-   :data-acquisition/request-by-id         qda/request-by-id
+   ;;:data-acquisition/requests-by-requester qda/requests-by-requester
+   ;;:data-acquisition/request-by-id         qda/request-by-id
 
    :datastore/metadata-with-activities qds/metadata-with-activities
    :datastore/metadata-by-id qds/metadata-by-id

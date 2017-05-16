@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [witan.gateway.integration.base :refer :all]
             [witan.gateway.handler :refer [transit-encode transit-decode]]
+            [witan.gateway.components.query-router :as queryr]
             [gniazdo.core :as ws]
             [kixi.comms :as c]
             [kixi.comms.time :refer [timestamp]]
@@ -29,6 +30,21 @@
                                               {:kixi.comms.message/type "query"
                                                :kixi.comms.query/body {query-name [[param-v] :fields]}
                                                :kixi.comms.query/id qid}))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftest all-queries-test
+  (doseq [query (keys queryr/functions)]
+    (testing (str "Query " query)
+      (let [qid (uuid)
+            resp (atom nil)]
+        (reset! received-fn #(reset! resp %))
+        (send-query qid query [])
+        (wait-for-pred #(deref resp))
+        (is (= (:kixi.comms.message/type @resp) "query-response") (str @resp))
+        (is (= (:kixi.comms.query/id @resp) qid))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (deftest metadata-activites-returns-nothing-when-there-is-nothing
   (let [qid (uuid)
