@@ -1,6 +1,6 @@
 (ns witan.gateway.queries.datastore
   (:require [taoensso.timbre :as log]
-            [org.httpkit.client :as http]
+            [clj-http.client :as http]
             ;;
             [witan.gateway.queries.utils :refer [directory-url user-header]]
             [witan.gateway.queries.heimdall :as heimdall]))
@@ -88,6 +88,7 @@
                                                   #_(when count
                                                       {:count count}))
                              :headers (user-header u)})]
+    (log/info ">>>>>>>>>>>>>>>>" resp)
     (if (= 200 (:status resp))
       (let [body (:body resp)]
         (expand-metadatas u d body))
