@@ -205,7 +205,7 @@
                                   channel
                                   (error-message raw-msg :unauthenticated nil))))
                              (catch Exception e
-                               (println "Exception thrown:" e)
+                               (log/error e)
                                (send-outbound!
                                 channel
                                 (error-message % :server-error (str e)))))))))
