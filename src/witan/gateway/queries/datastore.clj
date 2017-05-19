@@ -63,11 +63,11 @@
 (defn metadata-by-id
   [u d meta-id & _]
   (let [url (directory-url :datastore d "metadata" meta-id)
-        resp @(http/get url {:content-type :transit+json
-                             :accept :transit+json
-                             :throw-exceptions false
-                             :as :transit+json
-                             :headers (user-header u)})]
+        resp (http/get url {:content-type :transit+json
+                            :accept :transit+json
+                            :throw-exceptions false
+                            :as :transit+json
+                            :headers (user-header u)})]
     (if (= 200 (:status resp))
       (let [body (:body resp)]
         (expand-metadata u d body))
@@ -77,17 +77,17 @@
   "List file metadata with *this* activities set."
   [u d activities & _]
   (let [url (directory-url :datastore d "metadata")
-        resp @(http/get url {:content-type :transit+json
-                             :accept :transit+json
-                             :throw-exceptions false
-                             :as :transit+json
-                             :query-params (merge {:activity
-                                                   (mapv encode-kw activities)}
-                                                  #_(when index
-                                                      {:index index})
-                                                  #_(when count
-                                                      {:count count}))
-                             :headers (user-header u)})]
+        resp (http/get url {:content-type :transit+json
+                            :accept :transit+json
+                            :throw-exceptions false
+                            :as :transit+json
+                            :query-params (merge {:activity
+                                                  (mapv encode-kw activities)}
+                                                 #_(when index
+                                                     {:index index})
+                                                 #_(when count
+                                                     {:count count}))
+                            :headers (user-header u)})]
     (log/info ">>>>>>>>>>>>>>>>" resp)
     (if (= 200 (:status resp))
       (let [body (:body resp)]
