@@ -88,7 +88,6 @@
                                                  #_(when count
                                                      {:count count}))
                             :headers (user-header u)})]
-    (log/info ">>>>>>>>>>>>>>>>" resp)
     (if (= 200 (:status resp))
       (let [body (:body resp)]
         (expand-metadatas u d body))
