@@ -151,9 +151,10 @@
     (let [r (http/get (download-url @file-id)
                       {:throw-exceptions false
                        :cookies {"token" {:discard true, :path "/", :value @auth-token, :version 0}}
-                       :follow-redirects false})]
+                       :follow-redirects false
+                       :redirect-strategy :none})]
       (if (or (= 302 (:status r))
-              (< tries 0))
+              (<= tries 0))
         (do
           (is (= 302 (:status r)) (pr-str r))
           (when-let [redirect (get-in r [:headers "Location"])]

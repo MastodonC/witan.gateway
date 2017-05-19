@@ -228,12 +228,15 @@
         id         (get-in req [:params "id"])
         auth-token (get-in req [:cookies "token" :value])
         user       (p/authenticate auth (t/now) auth-token)]
-    (if-let [location (and user
-                           (p/get-download-redirect downloads user id))]
-      {:status 302
-       :headers {"Location" location}}
+    (if-not user
       {:status 401
-       :body "Unauthorized"})))
+       :body "Unauthenticated"}
+      (if-let [location (and user
+                             (p/get-download-redirect downloads user id))]
+        {:status 302
+         :headers {"Location" location}}
+        {:status 401
+         :body "Unauthorized"}))))
 
 (defn request-password-reset
   [req]
