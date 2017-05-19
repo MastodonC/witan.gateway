@@ -13,6 +13,7 @@
     (let [url (directory-url :datastore directory "file" file-id "link")
           r (http/get url {:headers (user-header user)
                            :follow-redirects false
+                           :redirect-strategy :none
                            :throw-exceptions false})]
       (get-in r [:headers "Location"])))
 

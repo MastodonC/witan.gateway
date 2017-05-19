@@ -12,7 +12,7 @@
                  [ring-cors "0.1.8"]
                  [ring/ring-core "1.5.1"]
                  [compojure "1.5.1"]
-                 [clj-http "2.1.0"]
+                 [kixi/clj-http "3.5.1-SNAPSHOT"]
                  [environ "1.1.0"]
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]

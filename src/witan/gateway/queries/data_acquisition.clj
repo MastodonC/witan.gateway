@@ -19,9 +19,9 @@
    :kixi.data-acquisition.request-for-data/message])
 
 (defn requests-by-requester
-  [u d id]
+  [u d id & _]
   [])
 
 (defn request-by-id
-  [u d id]
+  [u d id & _]
   {})

@@ -1,7 +1,6 @@
 (ns witan.gateway.queries.datastore
   (:require [taoensso.timbre :as log]
-            [org.httpkit.client :as http]
-            [cheshire.core :as json]
+            [clj-http.client :as http]
             ;;
             [witan.gateway.queries.utils :refer [directory-url user-header]]
             [witan.gateway.queries.heimdall :as heimdall]))
@@ -62,32 +61,34 @@
 ;; kixi.datastore.metadatastore
 
 (defn metadata-by-id
-  [u d meta-id]
+  [u d meta-id & _]
   (let [url (directory-url :datastore d "metadata" meta-id)
-        resp @(http/get url {:headers (user-header u)})]
+        resp (http/get url {:content-type :transit+json
+                            :accept :transit+json
+                            :throw-exceptions false
+                            :as :transit+json
+                            :headers (user-header u)})]
     (if (= 200 (:status resp))
-      (let [body (:body (update resp
-                                :body
-                                #(when %
-                                   (json/parse-string % keyword))))]
+      (let [body (:body resp)]
         (expand-metadata u d body))
       {:error (str "invalid status: " (:status resp))})))
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
-  [u d activities]
+  [u d activities & _]
   (let [url (directory-url :datastore d "metadata")
-        resp @(http/get url {:query-params (merge {:activity
-                                                   (mapv encode-kw activities)}
-                                                  #_(when index
-                                                      {:index index})
-                                                  #_(when count
-                                                      {:count count}))
-                             :headers (user-header u)})]
+        resp (http/get url {:content-type :transit+json
+                            :accept :transit+json
+                            :throw-exceptions false
+                            :as :transit+json
+                            :query-params (merge {:activity
+                                                  (mapv encode-kw activities)}
+                                                 #_(when index
+                                                     {:index index})
+                                                 #_(when count
+                                                     {:count count}))
+                            :headers (user-header u)})]
     (if (= 200 (:status resp))
-      (let [body (:body (update resp
-                                :body
-                                #(when %
-                                   (json/parse-string % keyword))))]
+      (let [body (:body resp)]
         (expand-metadatas u d body))
       {:error (str "invalid status: " (:status resp))})))
