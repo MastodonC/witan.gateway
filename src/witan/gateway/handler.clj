@@ -64,7 +64,7 @@
     (log/debug "Dispatching event to" ch)
     (send-message! ch event)
     (catch Exception e
-      (log/error "Failed to dispatch event:" e))))
+      (log/error e "Failed to dispatch event:" event))))
 
 (defn post-to-heimdall
   ([components path]
