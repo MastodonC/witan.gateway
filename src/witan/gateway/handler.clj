@@ -112,6 +112,26 @@
                          :kixi.comms.query/results results}))))
 
 ;;
+;;Add partition-key finder here!
+;;exception if there's isn't one
+
+(defn uuid
+  [& _]
+  (str (java.util.UUID/randomUUID)))
+
+(def command-key->partition-key-fn
+  {:kixi.datastore.filestore/create-upload-link uuid
+   :kixi.datastore.schema/create uuid
+   :kixi.datastore.filestore/create-file-metadata :kixi.datastore.metadatastore/id
+   :kixi.datastore.bundles/create-datapack :kixi.datastore.metadatastore/id
+   :kixi.datastore.metadata/sharing-change :kixi.datastore.metadatastore/id
+   :kixi.datastore.metadata/update :kixi.datastore.metadatastore/id})
+
+(defn partition-key-fn
+  [cmd-key]
+  (or (get command-key->partition-key-fn cmd-key)
+      (when (= "test" (namespace cmd-key)) uuid)
+      (throw (new Exception (str "All commands must have a parition key function defined: " cmd-key)))))
 
 (defmethod handle-message
   "command"
@@ -122,8 +142,10 @@
               kixi.comms.command/payload] :as command} user {:keys [comms connections]}]
   (p/add-receipt! connections ch id dispatch-event!)
   (log/info "Forwarding command" key version id)
-  (comms/send-command! comms key version user payload {:kixi.comms.command/id id
-                                                       :created-at created-at}))
+  (comms/send-command! comms key version user payload
+                       {:kixi.comms.command/id id
+                        :created-at created-at
+                        :kixi.comms.command/partition-key ((partition-key-fn key) payload)}))
 
 (defmethod handle-message
   "ping"
