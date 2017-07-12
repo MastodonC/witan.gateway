@@ -123,7 +123,7 @@
   {:kixi.datastore.filestore/create-upload-link uuid
    :kixi.datastore.schema/create uuid
    :kixi.datastore.filestore/create-file-metadata :kixi.datastore.metadatastore/id
-   :kixi.datastore.bundles/create-datapack :kixi.datastore.metadatastore/id
+   :kixi.datastore/create-datapack :kixi.datastore.metadatastore/id
    :kixi.datastore.metadatastore/sharing-change :kixi.datastore.metadatastore/id
    :kixi.datastore.metadatastore/update :kixi.datastore.metadatastore/id})
 
