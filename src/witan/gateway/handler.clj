@@ -131,7 +131,7 @@
   [cmd-key]
   (or (get command-key->partition-key-fn cmd-key)
       (when (= "test" (namespace cmd-key)) uuid)
-      (throw (new Exception (str "All commands must have a parition key function defined: " cmd-key)))))
+      (throw (new Exception (str "All commands must have a parition key function defined, see Readme for details: " cmd-key)))))
 
 (defmethod handle-message
   "command"
