@@ -5,7 +5,6 @@
             [kixi.log :as kixi-log]
             [taoensso.timbre :as timbre]
             [kixi.comms :as comms]
-            [kixi.comms.components.kinesis :as kinesis]
             [witan.gateway.protocols :refer [process-event!]]
             [witan.gateway.components.server :refer [new-http-server]]
             [witan.gateway.components.metrics :refer [map->Metrics]]
@@ -13,7 +12,8 @@
             [witan.gateway.components.connection-manager :refer [new-connection-manager]]
             [witan.gateway.components.auth :refer [new-authenticator]]
             [witan.gateway.components.downloads :refer [new-download-manager]]
-            [witan.gateway.components.events :refer [new-event-aggregator]]))
+            [witan.gateway.components.events :refer [new-event-aggregator]]
+            [witan.gateway.components.comms-wrapper :refer [new-comms-wrapper]]))
 
 (defn new-system [profile]
   (let [config (read-config (clojure.java.io/resource "config.edn") {:profile profile})
@@ -32,7 +32,7 @@
 
     (component/system-map
      :auth        (new-authenticator (-> config :auth))
-     :comms       (kinesis/map->Kinesis (-> config :comms :kinesis))
+     :comms       (new-comms-wrapper (-> config :comms :kinesis) (-> config :zk))
      :downloads   (new-download-manager (-> config :downloads) (:directory config))
      :events      (component/using
                    (new-event-aggregator (-> config :events))
@@ -42,7 +42,7 @@
                    [])
      :connections (component/using
                    (new-connection-manager (-> config :connections))
-                   [:comms :events])
+                   [:events])
      :queries     (new-query-router (:directory config))
      :http-kit    (component/using
                    (new-http-server (:webserver config) (:directory config))

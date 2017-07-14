@@ -3,7 +3,6 @@
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
             [clojure.spec               :as s]
-            [kixi.comms                 :as c]
             [witan.gateway.protocols    :as p :refer [ManageConnections]]
             [zookeeper                  :as zk]))
 
@@ -39,7 +38,7 @@
                                             :at (t/now)}))
 
   component/Lifecycle
-  (start [{:keys [comms events] :as component}]
+  (start [{:keys [events] :as component}]
     (log/info "Starting Connection Manager")
     (let [c (assoc component
                    :channels  (atom #{})
@@ -48,7 +47,7 @@
       (p/register-event-receiver! events cmfn)
       (assoc c :cmfn cmfn)))
 
-  (stop [{:keys [comms events] :as component}]
+  (stop [{:keys [events] :as component}]
     (log/info "Stopping Connection Manager")
     (p/unregister-event-receiver! events (:cmfn component))
     (dissoc component
