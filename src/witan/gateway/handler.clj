@@ -149,7 +149,7 @@
 
 (defmethod handle-message
   "ping"
-  [ch {:keys [kixi.comms.ping/id]} user {:keys [comms connections]}]
+  [ch {:keys [kixi.comms.ping/id]} user {:keys [_ connections]}]
   (log/trace "Received ping!")
   (send-outbound! ch (merge {:kixi.comms.message/type "pong"
                              :kixi.comms.pong/created-at (timestamp)}

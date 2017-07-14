@@ -1,4 +1,9 @@
 {:service-name "witan.gateway"
+ :zk {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+                      :staging-jenkins "master.mesos"
+                      :staging "master.mesos"
+                      :prod "master.mesos"}
+      :port 2181}
  :comms {:kinesis #profile {:development {:profile "dev"
                                           :app ^:ref [:service-name]
                                           :endpoint "kinesis.eu-central-1.amazonaws.com"
@@ -31,11 +36,7 @@
                                    :metric-level :NONE
                                    :streams {:event "prod-witan-event"
                                              :command "prod-witan-command"}}}}
- :events {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
-                          :staging-jenkins "master.mesos"
-                          :staging "master.mesos"
-                          :prod "master.mesos"}
-          :port 2181}
+ :events ^:ref [:zk]
  :connections {}
  :webserver {:port 30015}
  :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE

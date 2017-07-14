@@ -6,9 +6,7 @@
             [taoensso.timbre :as log]
             [buddy.core.keys            :as keys]
             [buddy.sign.jwt             :as jwt]
-            [clojure.core.async :refer :all]
-            [amazonica.aws.dynamodbv2 :as ddb]
-            [kixi.comms.components.kinesis :as kinesis]))
+            [clojure.core.async :refer :all]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -25,32 +23,6 @@
          (env :super-secret-password "test"))]
     (jwt/sign payload prvk {:alg :rs256})))
 
-(defn table-exists?
-  [endpoint table]
-  (try
-    (ddb/describe-table {:endpoint endpoint} table)
-    (catch Exception e false)))
-
-(defn clear-tables
-  [endpoint table-names]
-  (doseq [sub-table-names (partition-all 10 table-names)]
-    (doseq [table-name sub-table-names]
-      (ddb/delete-table {:endpoint endpoint} :table-name table-name))
-    (loop [tables sub-table-names]
-      (when (not-empty tables)
-        (recur (doall (filter (partial table-exists? endpoint) tables)))))))
-
-(defn- tear-down-kinesis!
-  [system]
-  (when-let [kinesis (:comms system)]
-    (log/info "Deleting dynamo tables ...")
-    (clear-tables (:dynamodb-endpoint kinesis)
-                  [(kinesis/event-worker-app-name (:app kinesis) (:profile kinesis))
-                   (kinesis/command-worker-app-name (:app kinesis) (:profile kinesis))])
-
-    #_(log/info "Deleting streams...")
-    #_(kinesis/delete-streams! (:endpoint kinesis) (vals (:streams kinesis)))))
-
 (defn cycle-system-fixture
   [a all-tests]
   (reset! a (repl/go))
@@ -59,7 +31,6 @@
     (all-tests)
     (finally
       (repl/stop)
-      (tear-down-kinesis! @a)
       (reset! a nil))))
 
 (defn create-ws-connection
