@@ -10,81 +10,20 @@
             [taoensso.timbre :as log]
             [clj-http.client :as http]
             [clj-time.core :as t]
-            [me.raynes.fs :as fs]
-            [clojure.java.shell :refer [sh]]))
+            [me.raynes.fs :as fs]))
 
 (def system (atom nil))
 (def file-id (atom nil))
 (def auth-token (atom nil))
 (def test-file-contents (str "hello, world " (uuid)))
-
-(defn test-login
-  [auth]
-  (let [tkp (-> "http://localhost:30015/login"
-                (http/post
-                 {:body "{\"username\": \"test@mastodonc.com\", \"password\": \"Secret123\"}"})
-                :body
-                (transit-decode))]
-    (reset! auth-token (get-in tkp [:token-pair :auth-token]))
-    (p/authenticate auth (t/now) (get-in tkp [:token-pair :auth-token]))))
-
-(defn find-datastore-docker-id
-  []
-  (let [ds-line (first
-                 (filter (partial re-find #"datastore")
-                         (rest (clojure.string/split (:out (sh "docker" "ps"))
-                                                     (re-pattern (str \newline))))))]
-    (re-find #"[a-zA-Z0-9]+" ds-line)))
-
-(defn cp-to-docker
-  [tmpfile upload-link]
-  (let [sh-line ["docker" "cp" (str tmpfile) (str (find-datastore-docker-id) ":" upload-link)]]
-    (println (apply sh sh-line))))
-
-(defn slurp-from-docker
-  [file]
-  (let [tmpfile (fs/temp-file "gateway-download-slurp-test-")
-        sh-line ["docker" "cp" (str (find-datastore-docker-id) ":" file) (str tmpfile)]]
-    (println (apply sh sh-line) sh-line)
-    (slurp tmpfile)))
-
-(defn put-to-aws
-  [tmpfile upload-link]
-  (http/put upload-link {:body tmpfile}))
-
-(defn upload-file-to-correct-location
-  [comms user file-contents {:keys [kixi.comms.event/payload] :as event}]
-  (let [{:keys [kixi.datastore.filestore/upload-link
-                kixi.datastore.filestore/id]} payload]
-    (let [metadata {:kixi.datastore.metadatastore/name "Test File"
-                    :kixi.datastore.metadatastore/description "Test Description"
-                    :kixi.datastore.metadatastore/id id
-                    :kixi.datastore.metadatastore/type "stored"
-                    :kixi.datastore.metadatastore/file-type "txt"
-                    :kixi.datastore.metadatastore/sharing
-                    {:kixi.datastore.metadatastore/meta-read (:kixi.user/groups user)
-                     :kixi.datastore.metadatastore/meta-update (:kixi.user/groups user)
-                     :kixi.datastore.metadatastore/file-read (:kixi.user/groups user)}
-                    :kixi.datastore.metadatastore/provenance
-                    {:kixi.datastore.metadatastore/source "upload"
-                     :kixi.user/id (:kixi.user/id user)}
-                    :kixi.datastore.metadatastore/size-bytes (count file-contents)
-                    :kixi.datastore.metadatastore/header false}
-          tmpfile (fs/temp-file (str "gateway-download-test-" id "_"))]
-      (spit tmpfile file-contents)
-      (log/info "Uploading test file to" upload-link)
-      (if (clojure.string/starts-with? upload-link "file:")
-        (cp-to-docker tmpfile (subs upload-link 7))
-        (put-to-aws tmpfile upload-link))
-      (Thread/sleep 300)
-      (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata
-                       {:kixi.comms.command/id (:kixi.comms.command/id event)})
-      nil)))
+(def test-file-metadata {:kixi.datastore.metadatastore/name "Test File"
+                         :kixi.datastore.metadatastore/description "Test Description"
+                         :kixi.datastore.metadatastore/file-type "txt"})
 
 (defn upload-file
   [system file-id-atom all-tests]
   (let [{:keys [comms auth]} @system
-        user (test-login auth)
+        user (test-login auth auth-token)
         adjusted-comms (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
         _ (log/info "Result of test login:" user)
         cid (uuid)
@@ -95,7 +34,8 @@
               (fn [{:keys [kixi.comms.command/id] :as event}]
                 (log/info "Event received: :kixi.datastore.filestore/upload-link-created. " event id cid)
                 (when (= id cid)
-                  (upload-file-to-correct-location comms user test-file-contents event))))
+                  (upload-file-to-correct-location comms user test-file-metadata
+                                                   test-file-contents event))))
              (c/attach-event-handler!
               adjusted-comms
               :download-test-file-metadata-rejected
