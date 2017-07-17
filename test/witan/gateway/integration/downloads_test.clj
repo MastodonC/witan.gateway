@@ -20,82 +20,9 @@
                          :kixi.datastore.metadatastore/description "Test Description"
                          :kixi.datastore.metadatastore/file-type "txt"})
 
-(defn upload-file-to-correct-location
-  [comms user file-meta file-contents {:keys [kixi.comms.event/payload] :as event}]
-  (let [{:keys [kixi.datastore.filestore/upload-link
-                kixi.datastore.filestore/id]} payload]
-    (let [metadata (merge {:kixi.datastore.metadatastore/id id
-                           :kixi.datastore.metadatastore/type "stored"
-                           :kixi.datastore.metadatastore/sharing
-                           {:kixi.datastore.metadatastore/meta-read (:kixi.user/groups user)
-                            :kixi.datastore.metadatastore/meta-update (:kixi.user/groups user)
-                            :kixi.datastore.metadatastore/file-read (:kixi.user/groups user)}
-                           :kixi.datastore.metadatastore/provenance
-                           {:kixi.datastore.metadatastore/source "upload"
-                            :kixi.user/id (:kixi.user/id user)}
-                           :kixi.datastore.metadatastore/size-bytes (count file-contents)
-                           :kixi.datastore.metadatastore/header false}
-                          file-meta)
-          tmpfile (fs/temp-file (str "gateway-download-test-" id "_"))]
-      (spit tmpfile file-contents)
-      (log/info "Uploading test file to" upload-link)
-      (if (clojure.string/starts-with? upload-link "file:")
-        (cp-to-docker tmpfile (subs upload-link 7))
-        (put-to-aws tmpfile upload-link))
-      (Thread/sleep 300)
-      (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0"
-                       user metadata
-                       {:kixi.comms.command/id (:kixi.comms.command/id event)})
-      nil)))
-
-(defn upload-file
-  [system file-id-atom all-tests]
-  (let [{:keys [comms auth]} @system
-        user (test-login auth auth-token)
-        adjusted-comms (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
-        _ (log/info "Result of test login:" user)
-        cid (uuid)
-        ehs [(c/attach-event-handler!
-              adjusted-comms
-              :download-test-upload-link-created
-              :kixi.datastore.filestore/upload-link-created "1.0.0"
-              (fn [{:keys [kixi.comms.command/id] :as event}]
-                (log/info "Event received: :kixi.datastore.filestore/upload-link-created. " event id cid)
-                (when (= id cid)
-                  (upload-file-to-correct-location comms user test-file-metadata
-                                                   test-file-contents event))))
-             (c/attach-event-handler!
-              adjusted-comms
-              :download-test-file-metadata-rejected
-              :kixi.datastore.file-metadata/rejected "1.0.0"
-              (fn [{:keys [kixi.comms.command/id] :as event}]
-                (when (= id cid)
-                  (log/error "Download test file was rejected:" event))))
-             (c/attach-event-handler!
-              adjusted-comms
-              :download-test-file-metadata-created
-              :kixi.datastore.file-metadata/updated "1.0.0"
-              (fn [{:keys [kixi.comms.event/payload kixi.comms.command/id] :as event}]
-                (when (= id cid)
-                  (let [id (get-in payload [:kixi.datastore.metadatastore/file-metadata
-                                            :kixi.datastore.metadatastore/id])]
-                    (reset! file-id-atom id)))
-                nil))]]
-    (log/info "Handlers attached.")
-    (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil
-                     {:kixi.comms.command/id cid
-                      :origin "witan.gateway-test"})
-    (log/info "Command sent: :kixi.datastore.filestore/create-upload-link with command ID" cid)
-    (wait-for-pred #(deref file-id-atom))
-    (run! (partial c/detach-handler! comms) ehs)
-    (log/info "File ID:" @file-id-atom)
-    (if-not (clojure.string/blank? @file-id-atom)
-      (all-tests)
-      (throw (Exception. "Tests could not be run")))))
-
 (use-fixtures :once
   (partial cycle-system-fixture system)
-  (partial upload-file system file-id))
+  (partial upload-file system file-id auth-token test-file-metadata test-file-contents))
 
 (defn download-url
   ([]
