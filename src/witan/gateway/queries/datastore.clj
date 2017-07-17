@@ -65,14 +65,16 @@
 
 (defn expand-bundled-ids
   [u d {:keys [kixi.datastore.metadatastore/bundled-ids] :as body}]
-  (assoc body :kixi.datastore.metadatastore/bundled-files
-         (into {}
-               (pmap #(hash-map
-                       %
-                       (let [resp (get-file u d %)]
-                         (if (= 200 (:status resp))
-                           (expand-metadata u d (:body resp))
-                           {:error (str "invalid status: " (:status resp))}))) bundled-ids))))
+  (if bundled-ids
+    (assoc body :kixi.datastore.metadatastore/bundled-files
+           (into {}
+                 (pmap #(hash-map
+                         %
+                         (let [resp (get-file u d %)]
+                           (if (= 200 (:status resp))
+                             (expand-metadata u d (:body resp))
+                             {:error (str "invalid status: " (:status resp))}))) bundled-ids)))
+    body))
 
 (defn expand-metadatas
   [u d body]
