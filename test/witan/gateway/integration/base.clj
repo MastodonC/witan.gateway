@@ -125,7 +125,7 @@
                            :kixi.datastore.metadatastore/size-bytes (count file-contents)
                            :kixi.datastore.metadatastore/header false}
                           file-meta)
-          tmpfile (fs/temp-file (str "gateway-test-" id "_"))]
+          tmpfile (fs/temp-file (str "gateway-download-test-" id "_"))]
       (spit tmpfile file-contents)
       (log/info "Uploading test file to" upload-link)
       (if (clojure.string/starts-with? upload-link "file:")
@@ -151,10 +151,8 @@
               (fn [{:keys [kixi.comms.command/id] :as event}]
                 (log/info "Event received: :kixi.datastore.filestore/upload-link-created. " event id cid)
                 (when (= id cid)
-                  (upload-file-to-correct-location
-                   comms user
-                   test-file-metadata
-                   test-file-contents event))))
+                  (upload-file-to-correct-location comms user test-file-metadata
+                                                   test-file-contents event))))
              (c/attach-event-handler!
               adjusted-comms
               :download-test-file-metadata-rejected
