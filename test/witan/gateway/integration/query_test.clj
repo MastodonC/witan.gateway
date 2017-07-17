@@ -10,7 +10,6 @@
             [buddy.sign.jwt             :as jwt]
             [taoensso.timbre :as log]))
 
-
 (def system (atom nil))
 (def wsconn (atom nil))
 (def received-fn (atom nil))
