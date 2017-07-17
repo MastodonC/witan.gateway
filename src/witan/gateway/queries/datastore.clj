@@ -54,6 +54,26 @@
                                              (keep identity)
                                              (vec)) (vals sharing))))))))))))
 
+(defn get-file
+  [u d id]
+  (http/get (directory-url :datastore d "metadata" id)
+            {:content-type :transit+json
+             :accept :transit+json
+             :throw-exceptions false
+             :as :transit+json
+             :headers (user-header u)}))
+
+(defn expand-bundled-ids
+  [u d {:keys [kixi.datastore.metadatastore/bundled-ids] :as body}]
+  (assoc body :kixi.datastore.metadatastore/bundled-files
+         (into {}
+               (pmap #(hash-map
+                       %
+                       (let [resp (get-file u d %)]
+                         (if (= 200 (:status resp))
+                           (expand-metadata u d (:body resp))
+                           {:error (str "invalid status: " (:status resp))}))) bundled-ids))))
+
 (defn expand-metadatas
   [u d body]
   (update-items body (partial expand-metadata u d)))
@@ -62,15 +82,12 @@
 
 (defn metadata-by-id
   [u d meta-id & _]
-  (let [url (directory-url :datastore d "metadata" meta-id)
-        resp (http/get url {:content-type :transit+json
-                            :accept :transit+json
-                            :throw-exceptions false
-                            :as :transit+json
-                            :headers (user-header u)})]
+  (let [resp (get-file u d meta-id)]
     (if (= 200 (:status resp))
       (let [body (:body resp)]
-        (expand-metadata u d body))
+        (->> body
+             (expand-metadata u d)
+             (expand-bundled-ids u d)))
       {:error (str "invalid status: " (:status resp))})))
 
 (defn metadata-with-activities
