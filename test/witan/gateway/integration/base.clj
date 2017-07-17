@@ -183,3 +183,46 @@
     (if-not (clojure.string/blank? @file-id-atom)
       (all-tests)
       (throw (Exception. "Tests could not be run")))))
+
+(defn create-bundle
+  [system bundle-id-atom auth-token-atom test-bundle-metadata test-bundle-ids all-tests]
+  (let [{:keys [comms auth]} @system
+        user (test-login auth auth-token-atom)
+        adjusted-comms (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
+        _ (log/info "Result of test login:" user)
+        cid (uuid)
+        ehs [(c/attach-event-handler!
+              adjusted-comms
+              :create-bundle-file-metadata-created
+              :kixi.datastore.file-metadata/updated "1.0.0"
+              (fn [{:keys [kixi.comms.event/payload kixi.comms.command/id] :as event}]
+                (when (= id cid)
+                  (let [id (get-in payload [:kixi.datastore.metadatastore/file-metadata
+                                            :kixi.datastore.metadatastore/id])]
+                    (reset! bundle-id-atom id)))
+                nil))
+             (c/attach-event-handler!
+              adjusted-comms
+              :create-bundle-file-metadata-rejected
+              :kixi.datastore.file-metadata/rejected "1.0.0"
+              (fn [{:keys [kixi.comms.command/id] :as event}]
+                (when (= id cid)
+                  (log/error "Bundle was rejected:" event))))]]
+    (log/info "Handlers attached.")
+    (c/send-command! comms :kixi.datastore.filestore/create-datapack "1.0.0" user
+                     (assoc test-bundle-metadata
+                            :kixi.datastore.metadatastore/bundled-ids (map deref test-bundle-ids)
+                            :kixi.datastore.metadatastore/provenance {:kixi.datastore.metadatastore/source "upload"
+                                                                      :kixi.user/id (:kixi.user/id user)}
+                            :kixi.datastore.metadatastore/sharing {:kixi.datastore.metadatastore/meta-read (:kixi.user/groups user)
+                                                                   :kixi.datastore.metadatastore/meta-update (:kixi.user/groups user)
+                                                                   :kixi.datastore.metadatastore/file-read (:kixi.user/groups user)})
+                     {:kixi.comms.command/id cid
+                      :origin "witan.gateway-test"})
+    (log/info "Command sent: :kixi.datastore.filestore/create-datapack with command ID" cid)
+    (wait-for-pred #(deref bundle-id-atom))
+    (run! (partial c/detach-handler! comms) ehs)
+    (log/info "Bundle ID:" @bundle-id-atom)
+    (if-not (clojure.string/blank? @bundle-id-atom)
+      (all-tests)
+      (throw (Exception. "Tests could not be run")))))
