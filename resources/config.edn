@@ -1,5 +1,7 @@
 {:service-name "witan.gateway"
- :zk {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+ :local-args #include "local.edn"
+ :zk {:host #profile {:default #or [#env ZOOKEEPER "127.0.0.1"]
+                      :dev-staging ^:ref [:local-args :zk]
                       :staging-jenkins "master.mesos"
                       :staging "master.mesos"
                       :prod "master.mesos"}
@@ -12,6 +14,14 @@
                                           :metric-level :NONE
                                           :streams {:event #or [#env EVENT_STREAM "witan-dev-event"]
                                                     :command #or [#env COMMAND_STREAM "witan-dev-command"]}}
+                            :dev-staging {:profile "dev"
+                                          :app ^:ref [:service-name]
+                                          :endpoint "kinesis.eu-central-1.amazonaws.com"
+                                          :dynamodb-endpoint #or [#env DYNAMODB_ENDPOINT "dynamodb.eu-central-1.amazonaws.com"]
+                                          :region-name "eu-central-1"
+                                          :metric-level :NONE
+                                          :streams {:event #or [#env EVENT_STREAM "staging-witan-event"]
+                                                    :command #or [#env COMMAND_STREAM "staging-witan-command"]}}
                             :staging-jenkins {:profile "staging-jenkins"
                                               :app ^:ref [:service-name]
                                               :endpoint "kinesis.eu-central-1.amazonaws.com"
@@ -39,28 +49,29 @@
  :events ^:ref [:zk]
  :connections {}
  :webserver {:port 30015}
- :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
-                                            "./test-resources/heimdall-dev_pubkey.pem"]
-                          :staging-jenkins #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
-                                                "./test-resources/heimdall-dev_pubkey.pem"]
+ :auth {:pubkey #profile {:default #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
+                                        ^:ref [:local-args :auth-pubkey]
+                                        "./test-resources/heimdall-dev_pubkey.pem"]
                           :staging "/root/prod_pubkey.pem"
                           :prod "/root/prod_pubkey.pem"}}
- :metrics {:json-reporter {:seconds #profile {:development 300
+ :metrics {:json-reporter {:seconds #profile {:default 300
                                               :staging-jenkins 300
                                               :staging 60
                                               :prod 60}}}
- :directory {:workspace {:host #profile {:development "127.0.0.1"
+ :directory {:workspace {:host #profile {:default "127.0.0.1"
                                          :staging-jenkins "witan-workspace.marathon.mesos"
                                          :staging "witan-workspace.marathon.mesos"
                                          :prod "witan-workspace.marathon.mesos"}
                          :port 20015}
-             :data-acquisition {:host #profile {:development "127.0.0.1"
+             :data-acquisition {:host #profile {:default "127.0.0.1"
                                                 :staging-jenkins "kixi-data-acquisition.marathon.mesos"
                                                 :staging "kixi-data-acquisition.marathon.mesos"
                                                 :prod "kixi-data-acquisition.marathon.mesos"}
                                 :port 40015}
              :heimdall #profile {:development {:host #or [#env HEIMDALL_HOST "localhost"]
                                                :port #or [#env HEIMDALL_PORT 3002]}
+                                 :dev-staging {:host "localhost"
+                                               :port 10010}
                                  :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
                                  :staging {:host "kixi.heimdall.marathon.mesos"
@@ -69,6 +80,8 @@
                                         :port 10010}}
              :datastore #profile {:development {:host #or [#env DATASTORE_HOST "localhost"]
                                                 :port #or [#env DATASTORE_PORT 8080]}
+                                  :dev-staging {:host "kixi.datastore.marathon.mesos"
+                                                :port 18080}
                                   :staging-jenkins {:host "kixi.datastore.marathon.mesos"
                                                     :port 18080}
                                   :staging {:host "kixi.datastore.marathon.mesos"
@@ -76,12 +89,14 @@
                                   :prod {:host "kixi.datastore.marathon.mesos"
                                          :port 18080}}}
  :log {:level #profile {:development :debug
+                        :dev-staging :debug
                         :staging-jenkins :debug
                         :staging :info
                         :prod  :warn}
        :options {:stacktrace-fonts {}}}
  :downloads {:timeout 10000}
  :verbose-logging? #profile {:development true
+                             :dev-staging true
                              :staging-jenkins true
                              :staging true
                              :prod  false}}

@@ -9,7 +9,11 @@
 
 (defn handle-events
   [receivers event]
-  (log/info "Observed event" (:kixi.comms.event/id event) (:kixi.comms.event/key event))
+  (log/info "Observed event"
+            (or (:kixi.comms.event/id event)
+                (:kixi.event/id event))
+            (or (:kixi.comms.event/key event)
+                (:kixi.event/key event)))
   (when (and receivers (not-empty @receivers))
     (log/debug "Forwarding to" (count @receivers) "receiver(s)...")
     (run! (fn [x] (x event)) @receivers))
@@ -28,21 +32,28 @@
           seq-name (zk/create-all zk "/kixi/gateway/events/consumer-" :sequential? true)
           consumer-name (clojure.string/replace (subs seq-name 1) #"/" "-")
           receivers (atom #{})
-          eh (c/attach-event-with-key-handler!
-              (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
-              consumer-name
-              :kixi.comms.command/id
-              (partial handle-events receivers))]
+          ehs [(c/attach-event-with-key-handler!
+                (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
+                consumer-name
+                :kixi.comms.command/id
+                (partial handle-events receivers))
+               (c/attach-event-with-key-handler!
+                (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
+                consumer-name
+                :kixi.command/id
+                (partial handle-events receivers))]]
       (log/info "Using consumer group:" consumer-name)
       (zk/close zk)
       (assoc component
-             :event-handler eh
+             :event-handlers ehs
              :receivers receivers)))
 
   (stop [component]
     (log/info "Stopping Event Aggregator")
+    (doseq [eh (:event-handlers component)]
+      (c/detach-handler! (:comms component) eh))
     (dissoc component
-            :event-handler
+            :event-handlers
             :receivers)))
 
 (defn new-event-aggregator [args]

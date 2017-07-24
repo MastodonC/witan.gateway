@@ -17,7 +17,7 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.2.13"]
+                 [kixi/kixi.comms "0.2.17"]
                  [kixi/kixi.log "0.1.4"]
                  [kixi/kixi.metrics "0.4.0"]
                  [metrics-clojure ~metrics-version]
@@ -31,7 +31,8 @@
              :dev {:source-paths ["dev-src"]
                    :dependencies [[org.clojure/tools.namespace "0.2.4"]
                                   [stylefruits/gniazdo "1.0.0"]
-                                  [me.raynes/fs "1.4.6"]]
+                                  [me.raynes/fs "1.4.6"]
+                                  [org.clojure/test.check "0.9.0"]]
                    :repl-options {:init-ns user}}}
   :release-tasks [["vcs" "assert-committed"]
                   ["change" "version"

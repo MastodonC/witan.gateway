@@ -53,14 +53,19 @@
 (defn send-outbound!
   [ch m]
   (let [o (transit-encode m)]
-    (log/debug "Sending:" o)
+    (log/debug "Sending" (count o) "characters")
     (send! ch o)))
 
 (defn send-message!
   [ch m]
-  (if-let [err (s/explain-data :kixi.comms.message/message m)]
-    (log/error "Failed to send a message - validation failed:" (str err))
-    (send-outbound! ch m)))
+  (cond
+    (:kixi.comms.message/type m)
+    (if-let [err (s/explain-data :kixi.comms.message/message m)]
+      (log/error "Failed to send a message - validation failed:" (str err))
+      (send-outbound! ch m))
+    (:kixi.message/type m)
+    (send-outbound! ch m)
+    :else (log/error "Failed to send a message - unrecognised message:" (pr-str m))))
 
 (defn dispatch-event!
   [ch receipt event]
@@ -97,7 +102,8 @@
 ;; Message Handling
 
 (defmulti handle-message
-  (fn [ch msg user components] (:kixi.comms.message/type msg)))
+  (fn [ch msg user components] (or (:kixi.comms.message/type msg)
+                                   (:kixi.message/type msg))))
 
 (defmethod handle-message
   "query"
@@ -125,13 +131,14 @@
    :kixi.datastore.filestore/create-file-metadata :kixi.datastore.metadatastore/id
    :kixi.datastore/create-datapack :kixi.datastore.metadatastore/id
    :kixi.datastore.metadatastore/sharing-change :kixi.datastore.metadatastore/id
-   :kixi.datastore.metadatastore/update :kixi.datastore.metadatastore/id})
+   :kixi.datastore.metadatastore/update :kixi.datastore.metadatastore/id
+   :kixi.datastore/delete-bundle :kixi.datastore.metadatastore/id})
 
 (defn partition-key-fn
   [cmd-key]
   (or (get command-key->partition-key-fn cmd-key)
       (when (= "test" (namespace cmd-key)) uuid)
-      (throw (new Exception (str "All commands must have a parition key function defined, see Readme for details: " cmd-key)))))
+      (throw (new Exception (str "All commands must have a partition key function defined, see Readme for details: " cmd-key)))))
 
 (defmethod handle-message
   "command"
@@ -146,6 +153,22 @@
                        {:kixi.comms.command/id id
                         :created-at created-at
                         :kixi.comms.command/partition-key ((partition-key-fn key) payload)}))
+
+(defmethod comms/command-payload
+  :default
+  [_]
+  (s/keys))
+
+;; New syntax uses kw
+(defmethod handle-message
+  :command
+  [ch {:keys [kixi.command/id kixi.command/type kixi.command/version] :as command} user {:keys [comms connections]}]
+  (p/add-receipt! connections ch id dispatch-event!)
+  (log/info "Forwarding command" type version id)
+  (comms/send-valid-command! comms (merge
+                                    (dissoc command :kixi.comms.auth/token-pair)
+                                    {:kixi/user user} {:kixi.command/id id})
+                             {:partition-key ((partition-key-fn type) command)}))
 
 (defmethod handle-message
   "ping"
@@ -195,14 +218,16 @@
    provide so we add them here"
   [msg]
   (let [pre-process
-        (case (:kixi.comms.message/type msg)
-          "command" (assoc msg :kixi.comms.command/created-at (timestamp))
-          msg)
+        (cond
+          (= "command" (:kixi.comms.message/type msg)) (assoc msg :kixi.comms.command/created-at (timestamp))
+          ;; New syntax uses kw
+          (= :command (:kixi.message/type msg)) (assoc msg :kixi.command/created-at (timestamp))
+          :else msg)
         result
-        (case (:kixi.comms.message/type msg)
-          "command" (s/conform :kixi.comms.message/message pre-process)
-          "query"   (s/conform :kixi.comms.message/message pre-process)
-          pre-process)]
+        (cond
+          (= "command" (:kixi.comms.message/type msg)) (s/conform :kixi.comms.message/message pre-process)
+          (= "query" (:kixi.comms.message/type msg))   (s/conform :kixi.comms.message/message pre-process)
+          :else pre-process)]
     [pre-process result]))
 
 (defn valid-auth?
