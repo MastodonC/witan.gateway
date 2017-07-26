@@ -12,15 +12,14 @@
 (defrecord ConnectionManager []
   ManageConnections
   (process-event! [{:keys [receipts]} event]
-    (when-let [id (:kixi.comms.command/id event)]
+    (when-let [id (or (:kixi.comms.command/id event)
+                      (:kixi.command/id event))]
       (try
         (when-let [{:keys [cb ch]} (get @receipts id)]
-          (if-let [error (s/explain-data :kixi.comms.message/event event)]
-            (log/error "Event schema coercion failed: " (pr-str error) event)
-            (do
-              (log/info "Sending event" (:kixi.comms.event/id event) "back to client")
-              (cb ch id event)
-              nil)))
+          (log/info "Sending event" (or (:kixi.comms.event/id event)
+                                        (:kixi.event/id event)) "back to client")
+          (cb ch id event)
+          nil)
         (catch Exception e
           (log/error "Error whilst processing an event:" event e)))))
   (add-connection! [{:keys [channels]} connection]

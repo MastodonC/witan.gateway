@@ -46,16 +46,24 @@
     (comms/send-event! inner-comms event version payload))
   (send-event! [this event version payload opts]
     (comms/send-event! inner-comms event version payload opts))
+  (-send-event! [this event opts]
+    (comms/-send-event! inner-comms event opts))
   (send-command! [this command version user payload]
     (comms/send-command! inner-comms command version user payload))
   (send-command! [this command version user payload opts]
     (comms/send-command! inner-comms command version user payload opts))
+  (-send-command! [this command opts]
+    (comms/-send-command! inner-comms command opts))
   (attach-event-handler! [this group-id event version handler]
     (comms/attach-event-handler! inner-comms group-id event version handler))
   (attach-event-with-key-handler! [this group-id map-key handler]
     (comms/attach-event-with-key-handler! inner-comms group-id map-key handler))
+  (attach-validating-event-handler! [this group-id event version handler]
+    (comms/attach-validating-event-handler! inner-comms group-id event version handler))
   (attach-command-handler! [this group-id event version handler]
     (comms/attach-command-handler! inner-comms group-id event version handler))
+  (attach-validating-command-handler! [this group-id command version handler]
+    (comms/attach-validating-command-handler! inner-comms group-id command version handler))
   (detach-handler! [this handler]
     (comms/detach-handler! inner-comms handler))
   component/Lifecycle
