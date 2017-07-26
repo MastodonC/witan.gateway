@@ -50,6 +50,8 @@
  :connections {}
  :webserver {:port 30015}
  :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
+                                            "./test-resources/heimdall-dev_pubkey.pem"]
+                          :dev-staging #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
                                             ^:ref [:local-args :auth-pubkey]
                                             "./test-resources/heimdall-dev_pubkey.pem"]
                           :staging "/root/prod_pubkey.pem"
