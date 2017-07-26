@@ -1,6 +1,6 @@
 {:service-name "witan.gateway"
  :local-args #include "local.edn"
- :zk {:host #profile {:development #or [#env ZOOKEEPER "127.0.0.1"]
+ :zk {:host #profile {:default #or [#env ZOOKEEPER "127.0.0.1"]
                       :dev-staging ^:ref [:local-args :zk]
                       :staging-jenkins "master.mesos"
                       :staging "master.mesos"
@@ -49,25 +49,21 @@
  :events ^:ref [:zk]
  :connections {}
  :webserver {:port 30015}
- :auth {:pubkey #profile {:development #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
-                                            "./test-resources/heimdall-dev_pubkey.pem"]
-                          :dev-staging #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
-                                            ^:ref [:local-args :auth-pubkey]
-                                            "./test-resources/heimdall-dev_pubkey.pem"]
+ :auth {:pubkey #profile {:default #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
+                                        ^:ref [:local-args :auth-pubkey]
+                                        "./test-resources/heimdall-dev_pubkey.pem"]
                           :staging "/root/prod_pubkey.pem"
                           :prod "/root/prod_pubkey.pem"}}
- :metrics {:json-reporter {:seconds #profile {:development 300
+ :metrics {:json-reporter {:seconds #profile {:default 300
                                               :staging-jenkins 300
                                               :staging 60
                                               :prod 60}}}
- :directory {:workspace {:host #profile {:development "127.0.0.1"
-                                         :dev-staging "127.0.0.1"
+ :directory {:workspace {:host #profile {:default "127.0.0.1"
                                          :staging-jenkins "witan-workspace.marathon.mesos"
                                          :staging "witan-workspace.marathon.mesos"
                                          :prod "witan-workspace.marathon.mesos"}
                          :port 20015}
-             :data-acquisition {:host #profile {:development "127.0.0.1"
-                                                :dev-staging "127.0.0.1"
+             :data-acquisition {:host #profile {:default "127.0.0.1"
                                                 :staging-jenkins "kixi-data-acquisition.marathon.mesos"
                                                 :staging "kixi-data-acquisition.marathon.mesos"
                                                 :prod "kixi-data-acquisition.marathon.mesos"}
