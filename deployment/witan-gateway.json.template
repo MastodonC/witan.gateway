@@ -1,43 +1,40 @@
 {
-    "acceptedResourceRoles": ["slave_public"],
-    "container": {
-        "type": "DOCKER",
-        "docker": {
-            "image": "mastodonc/witan.gateway:@@TAG@@",
-            "parameters": [
-                {"key": "env", "value": "ENVIRONMENT=@@ENVIRONMENT@@"},
-                {"key": "env", "value": "JAVA_OPTS=@@JAVA_OPTS@@"},
-                {"key": "env", "value": "SECRETS_BUCKET=@@SECRETS_BUCKET@@"},
-                {"key": "env", "value": "AWS_REGION=@@AWS_REGION@@"},
-                {"key": "label", "value": "cluster=@@ENVIRONMENT@@"},
-                {"key": "label", "value": "application=witan-gateway"}
-            ],
-            "network": "BRIDGE",
-            "portMappings": [
-                {
-                    "containerPort": 80,
-                    "hostPort": 80,
-                    "protocol": "tcp"
-                }
-            ]
-        }
-    },
-    "id": "witan-gateway",
-    "constraints": [["hostname", "UNIQUE"]],
-    "instances": @@INSTANCE_COUNT@@,
-    "cpus": @@CPUS@@,
-    "mem": @@MEM@@,
-    "healthChecks": [{
-        "path": "/healthcheck",
-        "portIndex": 0,
-        "protocol": "HTTP",
-        "gracePeriodSeconds": 300,
-        "intervalSeconds": 60,
-        "timeoutSeconds": 20,
-        "maxConsecutiveFailures": 3,
-        "ignoreHttp1xx": false
-    }],
-    "upgradeStrategy": {
-        "minimumHealthCapacity": 0
+  "acceptedResourceRoles": ["slave_public"],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "mastodonc/witan.gateway:@@TAG@@",
+      "parameters": [
+         {"key": "env", "value": "ENVIRONMENT=@@ENVIRONMENT@@"},
+         {"key": "env", "value": "JAVA_OPTS=@@JAVA_OPTS@@"},
+         {"key": "env", "value": "SECRETS_BUCKET=@@SECRETS_BUCKET@@"},
+         {"key": "env", "value": "AWS_REGION=@@AWS_REGION@@"},
+         {"key": "label", "value": "cluster=@@ENVIRONMENT@@"},
+         {"key": "label", "value": "application=witan-gateway"}
+      ],
+      "network": "BRIDGE",
+      "portMappings": [
+          {
+              "containerPort": 80,
+              "hostPort": 80,
+              "protocol": "tcp"
+          }
+      ]
     }
+  },
+  "id": "witan-gateway",
+  "constraints": [["hostname", "UNIQUE"]],
+  "instances": @@INSTANCE_COUNT@@,
+  "cpus": @@CPUS@@,
+  "mem": @@MEM@@,
+  "healthChecks": [{
+     "path": "/healthcheck",
+     "portIndex": 0,
+     "protocol": "HTTP",
+     "gracePeriodSeconds": 300,
+     "intervalSeconds": 60,
+     "timeoutSeconds": 20,
+     "maxConsecutiveFailures": 3,
+     "ignoreHttp1xx": false
+  }]
 }
