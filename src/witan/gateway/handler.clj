@@ -132,7 +132,8 @@
    :kixi.datastore/create-datapack :kixi.datastore.metadatastore/id
    :kixi.datastore.metadatastore/sharing-change :kixi.datastore.metadatastore/id
    :kixi.datastore.metadatastore/update :kixi.datastore.metadatastore/id
-   :kixi.datastore/delete-bundle :kixi.datastore.metadatastore/id})
+   :kixi.datastore/delete-bundle :kixi.datastore.metadatastore/id
+   :kixi.datastore/remove-files-from-bundle :kixi.datastore.metadatastore/id})
 
 (defn partition-key-fn
   [cmd-key]
