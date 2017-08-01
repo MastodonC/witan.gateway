@@ -36,6 +36,8 @@
                                       :dynamodb-endpoint "dynamodb.eu-central-1.amazonaws.com"
                                       :region-name "eu-central-1"
                                       :metric-level :NONE
+                                      :initial-lease-table-read-capacity 1
+                                      :initial-lease-table-write-capacity 1
                                       :streams {:event "staging-witan-event"
                                                 :command "staging-witan-command"}}
                             :prod {:profile "prod"
