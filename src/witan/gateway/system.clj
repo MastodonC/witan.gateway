@@ -5,6 +5,7 @@
             [kixi.log :as kixi-log]
             [taoensso.timbre :as timbre]
             [kixi.comms :as comms]
+            [signal.handler :refer [with-handler]]
             [witan.gateway.protocols :refer [process-event!]]
             [witan.gateway.components.server :refer [new-http-server]]
             [witan.gateway.components.metrics :refer [map->Metrics]]
@@ -49,7 +50,8 @@
                    [:connections :comms :queries :auth :downloads :metrics]))))
 
 (defn -main [& [arg]]
-  (let [profile (or (keyword arg) :staging)]
+  (let [profile (or (keyword arg) :staging)
+        sys (atom nil)]
 
     ;; https://stuartsierra.com/2015/05/27/clojure-uncaught-exceptions
     (Thread/setDefaultUncaughtExceptionHandler
@@ -57,5 +59,7 @@
        (uncaughtException [_ thread ex]
          (timbre/error ex "Unhandled exception:" (.getMessage ex)))))
 
-    (component/start
-     (new-system profile))))
+    (reset! sys (component/start (new-system profile)))
+    (with-handler :term
+      (log/info "SIGTERM was caught: shutting down...")
+      (component/stop @sys))))
