@@ -61,5 +61,5 @@
 
     (reset! sys (component/start (new-system profile)))
     (with-handler :term
-      (log/info "SIGTERM was caught: shutting down...")
+      (timbre/info "SIGTERM was caught: shutting down...")
       (component/stop @sys))))
