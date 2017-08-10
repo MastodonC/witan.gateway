@@ -19,7 +19,7 @@
                  [zookeeper-clj "0.9.4"]
                  [kixi/kixi.comms "0.2.19"]
                  [kixi/kixi.log "0.1.4"]
-                 [kixi/kixi.metrics "0.4.0"]
+                 [kixi/kixi.metrics "0.4.1"]
                  [metrics-clojure ~metrics-version]
                  [metrics-clojure-jvm ~metrics-version]
                  [metrics-clojure-ring ~metrics-version]
