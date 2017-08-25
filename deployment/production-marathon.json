@@ -38,6 +38,6 @@
      "ignoreHttp1xx": false
   }],
   "upgradeStrategy": {
-      "minimumHealthCapacity": 0.5
+      "minimumHealthCapacity": 0
   }
 }
