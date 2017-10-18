@@ -1,18 +1,9 @@
-FROM phusion/baseimage:0.9.19
+FROM zittix/docker-baseimage-java8
 MAINTAINER Antony Woods <antony@mastodonc.com>
 
 CMD ["/sbin/my_init"]
 
 RUN apt-get update && apt-get install -y software-properties-common python2.7 unzip
-
-# Install Java
-RUN add-apt-repository -y ppa:webupd8team/java \
-&& apt-get update \
-&& echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections \
-&& apt-get install -y \
-software-properties-common \
-oracle-java8-installer \
-oracle-java8-set-default
 
 # Install Nginx.
 RUN apt-get install -y python-software-properties && \
