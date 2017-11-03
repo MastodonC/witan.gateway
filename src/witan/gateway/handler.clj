@@ -127,6 +127,8 @@
 
 (def command-key->partition-key-fn
   {:kixi.datastore.filestore/create-upload-link uuid
+   :kixi.datastore.filestore/create-multi-part-upload-link uuid
+   :kixi.datastore.filestore/complete-multi-part-upload :kixi.datastore.filestore/id
    :kixi.datastore.schema/create uuid
    :kixi.datastore.filestore/create-file-metadata :kixi.datastore.metadatastore/id
    :kixi.datastore/create-datapack :kixi.datastore.metadatastore/id
