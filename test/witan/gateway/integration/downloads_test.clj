@@ -78,7 +78,8 @@
         (put-to-aws tmpfile upload-link))
       (Thread/sleep 300)
       (c/send-command! comms :kixi.datastore.filestore/create-file-metadata "1.0.0" user metadata
-                       {:kixi.comms.command/id (:kixi.comms.command/id event)})
+                       {:kixi.comms.command/id (:kixi.comms.command/id event)
+                        :kixi.comms.command/partition-key id})
       nil)))
 
 (defn upload-file
@@ -116,7 +117,8 @@
     (log/info "Handlers attached.")
     (c/send-command! comms :kixi.datastore.filestore/create-upload-link "1.0.0" user nil
                      {:kixi.comms.command/id cid
-                      :origin "witan.gateway-test"})
+                      :origin "witan.gateway-test"
+                      :kixi.comms.command/partition-key cid})
     (log/info "Command sent: :kixi.datastore.filestore/create-upload-link with command ID" cid)
     (wait-for-pred #(deref file-id-atom))
     (run! (partial c/detach-handler! comms) ehs)

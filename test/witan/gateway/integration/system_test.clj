@@ -92,11 +92,13 @@
                                  [{:kixi.comms.message/type "event"
                                    :kixi.comms.event/key :test/command-received-2a
                                    :kixi.comms.event/version "1.0.0"
-                                   :kixi.comms.event/payload (assoc payload :bar 456)}
+                                   :kixi.comms.event/payload (assoc payload :bar 456)
+                                   :kixi.comms.event/partition-key id}
                                   {:kixi.comms.message/type "event"
                                    :kixi.comms.event/key :test/command-received-2b
                                    :kixi.comms.event/version "1.0.0"
-                                   :kixi.comms.event/payload (assoc payload :bar 456)}]))
+                                   :kixi.comms.event/payload (assoc payload :bar 456)
+                                   :kixi.comms.event/partition-key id}]))
     (c/attach-event-handler! comms
                              :submit-command-test-3
                              :test/command-received-2a
