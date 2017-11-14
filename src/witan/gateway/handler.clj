@@ -1,7 +1,7 @@
 (ns witan.gateway.handler
   (:require [compojure.core :refer :all]
             [taoensso.timbre :as log]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [witan.gateway.protocols :as p]
             [clojure.core.async :as async :refer [chan go go-loop put! <! <!!]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
@@ -304,7 +304,8 @@
                              :kixi.heimdall/create-password-reset-request
                              "1.0.0"
                              nil
-                             {:username username})
+                             {:username username}
+                             {:kixi.comms.command/partition-key username})
         {:status 201 :body (transit-encode "OK")}))))
 
 (defn complete-password-reset

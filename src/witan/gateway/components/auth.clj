@@ -3,7 +3,7 @@
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
             [clj-time.coerce            :as ct]
-            [clojure.spec               :as s]
+            [clojure.spec.alpha               :as s]
             [kixi.comms                 :as c]
             [buddy.core.keys            :as keys]
             [buddy.sign.jwt             :as jwt]

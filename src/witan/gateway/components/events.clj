@@ -2,7 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre            :as log]
             [clj-time.core              :as t]
-            [clojure.spec               :as s]
+            [clojure.spec.alpha               :as s]
             [kixi.comms                 :as c]
             [witan.gateway.protocols    :as p :refer [AggregateEvents]]
             [zookeeper                  :as zk]))

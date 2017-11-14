@@ -42,14 +42,10 @@
 (defrecord CommsWrapper [config
                          inner-comms]
   comms/Communications
-  (send-event! [this event version payload]
-    (comms/send-event! inner-comms event version payload))
   (send-event! [this event version payload opts]
     (comms/send-event! inner-comms event version payload opts))
   (-send-event! [this event opts]
     (comms/-send-event! inner-comms event opts))
-  (send-command! [this command version user payload]
-    (comms/send-command! inner-comms command version user payload))
   (send-command! [this command version user payload opts]
     (comms/send-command! inner-comms command version user payload opts))
   (-send-command! [this command opts]
