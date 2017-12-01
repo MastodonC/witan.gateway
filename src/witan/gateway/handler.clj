@@ -138,6 +138,7 @@
    :kixi.datastore/delete-bundle :kixi.datastore.metadatastore/id
    :kixi.datastore/remove-files-from-bundle :kixi.datastore.metadatastore/id
    :kixi.datastore/add-files-to-bundle :kixi.datastore.metadatastore/id
+   :kixi.datastore/delete-file :kixi.datastore.metadatastore/id
    :kixi.datastore.filestore/initiate-file-upload uuid
    :kixi.datastore.filestore/complete-file-upload :kixi.datastore.filestore/id})
 
