@@ -2,7 +2,7 @@
   (:require [taoensso.timbre :as log]
             [clj-http.client :as http]
             ;;
-            [witan.gateway.queries.utils :refer [directory-url user-header]]
+            [witan.gateway.queries.utils :refer [directory-url user-header error-response]]
             [witan.gateway.queries.heimdall :as heimdall]))
 
 (defn encode-kw
@@ -73,7 +73,7 @@
                          (let [resp (get-file u d %)]
                            (if (= 200 (:status resp))
                              (expand-metadata u d (:body resp))
-                             {:error (str "invalid status: " (:status resp))}))) bundled-ids)))
+                             (error-response "datastore expand-bundled-ids" resp)))) bundled-ids)))
     body))
 
 (defn expand-metadatas
@@ -90,7 +90,7 @@
         (->> body
              (expand-metadata u d)
              (expand-bundled-ids u d)))
-      {:error (str "invalid status: " (:status resp))})))
+      (error-response "datastore metadata-by-id" resp))))
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
@@ -110,4 +110,4 @@
     (if (= 200 (:status resp))
       (let [body (:body resp)]
         (expand-metadatas u d body))
-      {:error (str "invalid status: " (:status resp))})))
+      (error-response "datastore metadata-with-activities" resp))))

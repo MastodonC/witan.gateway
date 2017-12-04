@@ -2,7 +2,7 @@
   (:require [taoensso.timbre :as log]
             [org.httpkit.client :as http]
             [witan.gateway.handler :refer [transit-encode transit-decode]]
-            [witan.gateway.queries.utils :refer [directory-url user-header]]))
+            [witan.gateway.queries.utils :refer [directory-url user-header error-response]]))
 
 (defn get-elements
   [u d method elements & _]
@@ -14,7 +14,7 @@
                      :body
                      #(when %
                         (transit-decode %))))
-      {:error (str "invalid status: " (:status resp))})))
+      (error-response "heimdall get-elements" resp))))
 
 (defn get-users-info
   [u d users & _]
@@ -33,4 +33,4 @@
                      :body
                      #(when %
                         (transit-decode %))))
-      {:error (str "invalid status: " (:status resp))})))
+      (error-response "heimdall group-search" resp))))
