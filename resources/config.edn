@@ -108,5 +108,5 @@
  :verbose-logging? #profile {:development true
                              :dev-staging true
                              :staging-jenkins true
-                             :staging true
+                             :staging false
                              :prod  false}}
