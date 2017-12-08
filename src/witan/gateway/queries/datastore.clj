@@ -96,16 +96,18 @@
   "List file metadata with *this* activities set."
   [u d activities & _]
   (let [url (directory-url :datastore d "metadata")
+        opts (when (map? (last activities)) (last activities))
+        activities (if opts (butlast activities) activities)
+        {:keys [index count]
+         :or {index 0
+              count 50}} opts
         resp (http/get url {:content-type :transit+json
                             :accept :transit+json
                             :throw-exceptions false
                             :as :transit+json
-                            :query-params (merge {:activity
-                                                  (mapv encode-kw activities)}
-                                                 #_(when index
-                                                     {:index index})
-                                                 #_(when count
-                                                     {:count count}))
+                            :query-params {:activity (mapv encode-kw activities)
+                                           :index index
+                                           :count count}
                             :headers (user-header u)})]
     (if (= 200 (:status resp))
       (let [body (:body resp)]

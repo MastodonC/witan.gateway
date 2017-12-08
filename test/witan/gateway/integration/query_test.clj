@@ -12,21 +12,18 @@
 
 
 (def system (atom nil))
+(def token (atom nil))
 (def wsconn (atom nil))
 (def received-fn (atom nil))
 
-(use-fixtures :once (partial cycle-system-fixture system))
+(use-fixtures :once
+  (partial cycle-system-fixture system)
+  (partial login system token))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
-
-(def token
-  {:kixi.comms.auth/token-pair
-   {:auth-token (sign {:id (uuid)
-                       :user-groups [(uuid)]
-                       :self-group (uuid)})}})
 
 (defn send-query
   [qid query-name param-v]
-  (ws/send-msg @wsconn (transit-encode (merge token
+  (ws/send-msg @wsconn (transit-encode (merge @token
                                               {:kixi.comms.message/type "query"
                                                :kixi.comms.query/body {query-name [[param-v] :fields]}
                                                :kixi.comms.query/id qid}))))
@@ -46,14 +43,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(deftest metadata-activites-returns-nothing-when-there-is-nothing
+(deftest metadata-activites-count-10
   (let [qid (uuid)
         resp (atom nil)]
     (reset! received-fn #(reset! resp %))
-    (send-query qid :datastore/metadata-with-activities [:kixi.datastore.metadatastore/file-read])
+    (send-query qid :datastore/metadata-with-activities [:kixi.datastore.metadatastore/file-read {:count 10}])
     (wait-for-pred #(deref resp))
-    (is (= {:kixi.comms.message/type "query-response",
-            :kixi.comms.query/id qid
-            :kixi.comms.query/results
-            [{:datastore/metadata-with-activities {:items [], :paging {:total 0, :count 0, :index 0}}}]}
-           @resp))))
+    (is (= (:kixi.comms.message/type @resp) "query-response"))
+    (is (= (:kixi.comms.query/id @resp) qid))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) 10))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) 0))))
+
+(deftest metadata-activites-count-10-index-5
+  (let [qid (uuid)
+        resp (atom nil)]
+    (reset! received-fn #(reset! resp %))
+    (send-query qid :datastore/metadata-with-activities [:kixi.datastore.metadatastore/file-read {:count 10 :index 5}])
+    (wait-for-pred #(deref resp))
+    (is (= (:kixi.comms.message/type @resp) "query-response"))
+    (is (= (:kixi.comms.query/id @resp) qid))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) 10))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) 5))))

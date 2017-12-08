@@ -25,6 +25,7 @@
 
 (defn cycle-system-fixture
   [a all-tests]
+  (log/info "Starting system via cycle-system-fixture")
   (reset! a (repl/go))
   (Thread/sleep 2000)
   (try
@@ -68,3 +69,17 @@
      (when (and (pos? try) (not (p)))
        (Thread/sleep ms)
        (recur (dec try))))))
+
+(defn login
+  [system-atom result-atom all-tests]
+  (log/info "Logging in as test user...")
+  (reset! result-atom {:kixi.comms.auth/token-pair
+                       (-> (assoc (:http-kit @system-atom)
+                                  :body {:username "test@mastodonc.com"
+                                         :password "Secret123"})
+                           (witan.gateway.handler/login)
+                           :body
+                           (witan.gateway.handler/transit-decode)
+                           :token-pair)})
+  (log/info "Login result:" @result-atom)
+  (all-tests))

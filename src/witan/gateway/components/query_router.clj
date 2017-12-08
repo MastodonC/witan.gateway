@@ -30,9 +30,13 @@
     (if-let [func (get functions query)]
       (let [result (apply (partial func user service-map) params)
             additional (when (:error result) {:original {:params params
-                                                         :fields fields}})]
-        {query (merge result additional)})
-      {query {:error "does not exist"}}))
+                                                         :fields fields}})
+            final (merge result additional)]
+        (log/debug "Query succeeded")
+        {query final})
+      (do
+        (log/debug "Query failed")
+        {query {:error "does not exist"}})))
 
   component/Lifecycle
   (start [component]
