@@ -88,9 +88,11 @@
 
 (defn dispatch-event!
   [ch receipt event]
+  (log/debug "Dispatching event to" ch)
   (try
-    (log/debug "Dispatching event to" ch)
-    (send-valid-message! ch event)
+    (let [[ok? err] (send-valid-message! ch event)]
+      (when-not ok?
+        (log/error e "Failed to dispatch event:" err event)))
     (catch Exception e
       (log/error e "Failed to dispatch event:" event))))
 
