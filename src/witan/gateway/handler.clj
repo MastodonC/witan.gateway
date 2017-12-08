@@ -50,28 +50,43 @@
     (transit-decode-bytes params)
     params))
 
-(defn send-outbound!
-  [ch m]
-  (let [o (transit-encode m)]
-    (log/debug "Sending" (count o) "characters")
-    (send! ch o)))
+(def ws-header-size 125)
+(def ws-max-message-size 65536)
 
-(defn send-message!
+(defn send-outbound!
+  "The quality of whatever you're sending is not checked or validated.
+   For comms messages you should use 'send-valid-message!'. Gateway messages
+   such as ping and refresh should not use 'send-valid-message!"
+  [ch m]
+  (let [o (transit-encode m)
+        total-size (+ ws-header-size (count o))]
+    (if (> total-size ws-max-message-size)
+      (do
+        (log/warn "Attempted to large message of" total-size "characters")
+        [false "Message too large"])
+      (do (log/debug "Sending" (count o) "characters")
+          (send! ch o)
+          [true nil]))))
+
+(defn send-valid-message!
+  "Checks that what's being sent is a valid 'message' (commands and events)
+   from kixi.comms spec."
   [ch m]
   (cond
     (:kixi.comms.message/type m)
     (if-let [err (s/explain-data :kixi.comms.message/message m)]
-      (log/error "Failed to send a message - validation failed:" (str err))
+      [false (log/error "Failed to send a message - validation failed:" (str err))]
       (send-outbound! ch m))
     (:kixi.message/type m)
     (send-outbound! ch m)
-    :else (log/error "Failed to send a message - unrecognised message:" (pr-str m))))
+    :else
+    [false (log/error "Failed to send a message - unrecognised message:" (pr-str m))]))
 
 (defn dispatch-event!
   [ch receipt event]
   (try
     (log/debug "Dispatching event to" ch)
-    (send-message! ch event)
+    (send-valid-message! ch event)
     (catch Exception e
       (log/error e "Failed to dispatch event:" event))))
 
@@ -109,13 +124,17 @@
   "query"
   [ch {:keys [kixi.comms.query/body kixi.comms.query/id]} user {:keys [queries]}]
   (if-not (map? body)
-    (send-message! ch {:kixi.comms.message/type "query-response"
-                       :kixi.comms.query/id id
-                       :kixi.comms.query/error "Query needs to be a vector"})
-    (let [results (mapv (partial p/route-query queries user) body)]
-      (send-message! ch {:kixi.comms.message/type "query-response"
-                         :kixi.comms.query/id id
-                         :kixi.comms.query/results results}))))
+    (send-valid-message! ch {:kixi.comms.message/type "query-response"
+                             :kixi.comms.query/id id
+                             :kixi.comms.query/error "Query needs to be a vector"})
+    (let [results (mapv (partial p/route-query queries user) body)
+          [ok? err] (send-valid-message! ch {:kixi.comms.message/type "query-response"
+                                             :kixi.comms.query/id id
+                                             :kixi.comms.query/results results})]
+      (when-not ok?
+        (send-valid-message! ch {:kixi.comms.message/type "query-response"
+                                 :kixi.comms.query/id id
+                                 :kixi.comms.query/error err})))))
 
 ;;
 ;;Add partition-key finder here!

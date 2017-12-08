@@ -12,6 +12,7 @@
 
 (def system (atom nil))
 (def wsconn (atom nil))
+(def token (atom nil))
 (def received-fn (atom nil))
 
 (defn set-receiver-fn!
@@ -19,18 +20,14 @@
   (log/info "Setting receiver fn token:" name)
   (reset! received-fn fn))
 
-(use-fixtures :once (partial cycle-system-fixture system))
+(use-fixtures :once
+  (partial cycle-system-fixture system)
+  (partial login system token))
 (use-fixtures :each (partial create-ws-connection wsconn received-fn))
-
-(def token
-  {:kixi.comms.auth/token-pair
-   {:auth-token (sign {:exp (ct/to-long (t/plus (t/now) (t/hours 1)))
-                       :id (uuid)
-                       :user-groups {:groups [(uuid)]}})}})
 
 (defn create-command
   [command-key version id payload]
-  (transit-encode (merge token
+  (transit-encode (merge @token
                          {:kixi.comms.message/type "command"
                           :kixi.comms.command/key command-key
                           :kixi.comms.command/version version
@@ -42,7 +39,7 @@
   (let [ping? (atom nil)
         id (uuid)]
     (set-receiver-fn! #(reset! ping? %) "submit-ping-command-test")
-    (ws/send-msg @wsconn (transit-encode (merge token
+    (ws/send-msg @wsconn (transit-encode (merge @token
                                                 {:kixi.comms.message/type "ping"
                                                  :kixi.comms.ping/id id
                                                  :kixi.comms.ping/created-at (timestamp)})))
@@ -51,6 +48,18 @@
     (is (not (contains? @ping? :error)) (pr-str @ping?))
     (is (= "pong" (:kixi.comms.message/type @ping?)) (pr-str @ping?))
     (is (= id (:kixi.comms.pong/id @ping?)))))
+
+(deftest refresh-token-test
+  (let [refreshed? (atom nil)
+        id (uuid)]
+    (set-receiver-fn! #(reset! refreshed? %) "refresh-token-test")
+    (ws/send-msg @wsconn (transit-encode (merge @token
+                                                {:kixi.comms.message/type "refresh"})))
+    (wait-for-pred #(deref refreshed?))
+    (is @refreshed?)
+    (is (not (contains? @refreshed? :error)) (pr-str @refreshed?))
+    (is (= "refresh-response" (:kixi.comms.message/type @refreshed?)) (pr-str @refreshed?))
+    (is (:kixi.comms.auth/token-pair @refreshed?))))
 
 
 (deftest submit-command-test
