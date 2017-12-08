@@ -92,7 +92,7 @@
   (try
     (let [[ok? err] (send-valid-message! ch event)]
       (when-not ok?
-        (log/error e "Failed to dispatch event:" err event)))
+        (log/error "Failed to dispatch event:" err event)))
     (catch Exception e
       (log/error e "Failed to dispatch event:" event))))
 
