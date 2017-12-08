@@ -75,12 +75,16 @@
   (cond
     (:kixi.comms.message/type m)
     (if-let [err (s/explain-data :kixi.comms.message/message m)]
-      [false (log/error "Failed to send a message - validation failed:" (str err))]
+      (let [err2 (str "Failed to send a message - validation failed: " err)]
+        (log/error err2)
+        [false err2])
       (send-outbound! ch m))
     (:kixi.message/type m)
     (send-outbound! ch m)
     :else
-    [false (log/error "Failed to send a message - unrecognised message:" (pr-str m))]))
+    (let [err2 (str "Failed to send a message - unrecognised message:" (pr-str m))]
+      (log/error err2)
+      [false err2])))
 
 (defn dispatch-event!
   [ch receipt event]
