@@ -62,7 +62,7 @@
         total-size (+ ws-header-size (count o))]
     (if (> total-size ws-max-message-size)
       (do
-        (log/warn "Attempted to large message of" total-size "characters")
+        (log/warn "Attempted to send large message of" total-size "characters")
         [false "Message too large"])
       (do (log/debug "Sending" (count o) "characters")
           (send! ch o)
