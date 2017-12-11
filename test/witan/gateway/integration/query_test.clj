@@ -36,7 +36,7 @@
       (let [qid (uuid)
             resp (atom nil)]
         (reset! received-fn #(reset! resp %))
-        (send-query qid query [])
+        (send-query qid query [] {})
         (wait-for-pred #(deref resp))
         (is (= (:kixi.comms.message/type @resp) "query-response") (str @resp))
         (is (= (:kixi.comms.query/id @resp) qid))))))
