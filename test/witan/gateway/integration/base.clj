@@ -63,7 +63,7 @@
                         (clean))
       (timeout 10000) (do
                         (log/error "Websocket connection timed out.")
-                        (clean)))) identity)
+                        (clean))) identity))
 
 (defn wait-for-pred
   ([p]
