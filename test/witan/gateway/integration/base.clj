@@ -6,7 +6,9 @@
             [taoensso.timbre :as log]
             [buddy.core.keys            :as keys]
             [buddy.sign.jwt             :as jwt]
-            [clojure.core.async :refer :all]))
+            [clojure.core.async :refer :all])
+  (:import (org.eclipse.jetty.websocket.client WebSocketClient)
+           (org.eclipse.jetty.websocket.api WebSocketPolicy)))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -40,15 +42,20 @@
         clean (fn []
                 (log/info "Closing websocket...")
                 (ws/close @a)
-                (reset! a nil))]
+                (reset! a nil))
+        url "ws://localhost:30015/ws"
+        c (ws/client)]
+    (.setMaxTextMessageSize (.getPolicy c) 4194304)
+    (.start c)
     (log/info "Opening websocket...")
-    (reset! a (ws/connect "ws://localhost:30015/ws"
-                          :on-connect (fn [& _]
-                                        (log/info "Websocket on-connect called.")
-                                        (put! run-tests-ch true))
-                          :on-receive #(when @received-fn
-                                         (log/info "Websocket received something!")
-                                         (@received-fn (transit-decode %)))))
+    (reset! a (ws/connect url
+                :on-connect (fn [& _]
+                              (log/info "Websocket on-connect called.")
+                              (put! run-tests-ch true))
+                :on-receive #(when @received-fn
+                               (log/info "Websocket received something!")
+                               (@received-fn (transit-decode %)))
+                :client c))
     (alt!!
       run-tests-ch    (do
                         (log/info "Running all tests...")
@@ -56,7 +63,7 @@
                         (clean))
       (timeout 10000) (do
                         (log/error "Websocket connection timed out.")
-                        (clean))) identity))
+                        (clean)))) identity)
 
 (defn wait-for-pred
   ([p]

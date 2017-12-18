@@ -8,7 +8,7 @@
                  [com.taoensso/timbre "4.8.0"]
                  [com.cognitect/transit-clj "0.8.290"]
                  [clj-time "0.11.0"]
-                 [http-kit "2.1.19"]
+                 [http-kit "2.2.0"]
                  [ring-cors "0.1.8"]
                  [ring/ring-core "1.5.1"]
                  [compojure "1.5.1"]
@@ -31,7 +31,7 @@
                        :uberjar-name "witan.gateway-standalone.jar"}
              :dev {:source-paths ["dev-src"]
                    :dependencies [[org.clojure/tools.namespace "0.2.4"]
-                                  [stylefruits/gniazdo "1.0.0"]
+                                  [stylefruits/gniazdo "1.0.1"]
                                   [me.raynes/fs "1.4.6"]
                                   [org.clojure/test.check "0.9.0"]]
                    :repl-options {:init-ns user}}}

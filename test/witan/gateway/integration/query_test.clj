@@ -43,7 +43,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(deftest metadata-activites-count-10
+(deftest metadata-activites-count
   (let [rcount (rand-nth (range 5 15))
         qid (uuid)
         resp (atom nil)]
@@ -55,7 +55,19 @@
     (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
     (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) 0))))
 
-(deftest metadata-activites-count-10-index-5
+(deftest metadata-activites-count-50
+  (let [rcount 50
+        qid (uuid)
+        resp (atom nil)]
+    (reset! received-fn #(reset! resp %))
+    (send-query qid :datastore/metadata-with-activities [:kixi.datastore.metadatastore/file-read] {:count rcount})
+    (wait-for-pred #(deref resp))
+    (is (= (:kixi.comms.message/type @resp) "query-response"))
+    (is (= (:kixi.comms.query/id @resp) qid))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) 0))))
+
+(deftest metadata-activites-count-
   (let [rcount (rand-nth (range 5 15))
         rindex (rand-nth (range 5 15))
         qid (uuid)

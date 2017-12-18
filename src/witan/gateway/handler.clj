@@ -58,15 +58,10 @@
    For comms messages you should use 'send-valid-message!'. Gateway messages
    such as ping and refresh should not use 'send-valid-message!"
   [ch m]
-  (let [o (transit-encode m)
-        total-size (+ ws-header-size (count o))]
-    (if (> total-size ws-max-message-size)
-      (do
-        (log/warn "Attempted to send large message of" total-size "characters")
-        [false "Message too large"])
-      (do (log/debug "Sending" (count o) "characters")
-          (send! ch o)
-          [true nil]))))
+  (let [o (transit-encode m)]
+    (log/debug "Sending" (count o) "characters")
+    (send! ch o)
+    [true nil]))
 
 (defn send-valid-message!
   "Checks that what's being sent is a valid 'message' (commands and events)
@@ -138,6 +133,7 @@
                                              :kixi.comms.query/id id
                                              :kixi.comms.query/results results})]
       (when-not ok?
+        (log/debug "Query was NOT ok.")
         (send-valid-message! ch {:kixi.comms.message/type "query-response"
                                  :kixi.comms.query/id id
                                  :kixi.comms.query/error err})))))
