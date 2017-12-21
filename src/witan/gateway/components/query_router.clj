@@ -28,12 +28,19 @@
   (route-query [{:keys [graph]} user [query [params fields]]]
     (log/info "Query:" query params user)
     (if-let [func (get functions query)]
-      (let [result (apply (partial func user service-map) params)
-            additional (when (:error result) {:original {:params params
-                                                         :fields fields}})
-            final (merge result additional)]
-        (log/debug "Query succeeded")
-        {query final})
+      (try
+        (let [result (apply (partial func user service-map) params)
+              additional (when (:error result) {:original {:params params
+                                                           :fields fields}})
+              final (merge result additional)]
+          (log/debug "Query succeeded")
+          {query final})
+        (catch clojure.lang.ArityException e
+          (log/warn e "Query failed - arity exception")
+          {query {:error "incorrect amount of arguments were supplied"}})
+        (catch Exception e
+          (log/error e "Query failed - unknown exception")
+          {query {:error "an unknown exception occurred"}}))
       (do
         (log/debug "Query failed")
         {query {:error "does not exist"}})))

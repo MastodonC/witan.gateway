@@ -43,6 +43,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(deftest broken-query
+  (let [qid (uuid)
+        resp (atom nil)]
+    (reset! received-fn #(reset! resp %))
+    (send-query qid :datastore/metadata-with-activities [:kixi.datastore.metadatastore/file-read])
+    (wait-for-pred #(deref resp))
+    (is (= (:kixi.comms.message/type @resp) "query-response"))
+    (is (= (:kixi.comms.query/id @resp) qid))
+    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :error])
+           "incorrect amount of arguments were supplied"))))
+
 (deftest metadata-activites-count
   (let [rcount (rand-nth (range 5 15))
         qid (uuid)
