@@ -1,7 +1,7 @@
 (def metrics-version "2.7.0")
 (defproject witan.gateway "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
-  :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/core.async "0.3.443"]
                  [org.clojure/data.codec "0.1.0"]
                  [com.stuartsierra/component "0.3.1"]
