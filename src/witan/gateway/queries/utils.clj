@@ -14,7 +14,10 @@
    "user-id" id})
 
 (defn error-response
-  [msg {:keys [status body] :as resp}]
-  (log/error "An error response was generated:" msg resp)
-  {:error (str "Invalid status: " status)
-   :error-info {:msg msg}})
+  ([msg resp]
+   (error-response msg resp true))
+  ([msg {:keys [status body] :as resp} log?]
+   (when log?
+     (log/error "An error response was generated:" msg resp))
+   {:error (str "Invalid status: " status)
+    :error-info {:msg msg}}))

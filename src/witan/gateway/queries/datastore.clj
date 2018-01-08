@@ -73,7 +73,7 @@
                          (let [resp (get-file u d %)]
                            (if (= 200 (:status resp))
                              (expand-metadata u d (:body resp))
-                             (error-response "datastore expand-bundled-ids" resp)))) bundled-ids)))
+                             (error-response "datastore expand-bundled-ids" resp false)))) bundled-ids)))
     body))
 
 (defn expand-metadatas
@@ -90,7 +90,7 @@
         (->> body
              (expand-metadata u d)
              (expand-bundled-ids u d)))
-      (error-response "datastore metadata-by-id" resp))))
+      (error-response "datastore metadata-by-id" resp false))))
 
 (defn metadata-with-activities
   "List file metadata with *this* activities set."
