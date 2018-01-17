@@ -1,5 +1,5 @@
 {:service-name "witan.gateway"
- ;;:local-args #include "local.edn"
+ :local-args #include "local.edn"
  :zk {:host #profile {:default #or [#env ZOOKEEPER "127.0.0.1"]
                       :dev-staging ^:ref [:local-args :zk]
                       :staging-jenkins "master.mesos"
@@ -97,7 +97,18 @@
                                   :staging {:host "kixi.datastore.marathon.mesos"
                                             :port 18080}
                                   :prod {:host "kixi.datastore.marathon.mesos"
-                                         :port 18080}}}
+                                         :port 18080}                                  }
+             :search #profile {:development {:host #or [#env SEARCH_HOST "localhost"]
+                                             :port #or [#env SEARCH_PORT 8091]}
+                               :dev-staging {:host "localhost"; "kixi.search.marathon.mesos"
+                                             :port 18091
+                                             }
+                               :staging-jenkins {:host "kixi.search.marathon.mesos"
+                                                 :port 18091}
+                               :staging {:host "kixi.search.marathon.mesos"
+                                         :port 18091}
+                               :prod {:host "kixi.search.marathon.mesos"
+                                      :port 18091}}}
  :log {:level #profile {:development :debug
                         :dev-staging :debug
                         :staging-jenkins :debug

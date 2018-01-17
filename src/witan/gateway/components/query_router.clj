@@ -6,7 +6,8 @@
             [witan.gateway.queries.data-acquisition :as qda]
             [witan.gateway.queries.workspace :as qw]
             [witan.gateway.queries.datastore :as qds]
-            [witan.gateway.queries.heimdall :as qh]))
+            [witan.gateway.queries.heimdall :as qh]
+            [witan.gateway.queries.search :as search]))
 
 (def functions
   {;;:workspace/list-by-owner qw/get-workspaces-by-owner
@@ -20,6 +21,10 @@
 
    :datastore/metadata-with-activities qds/metadata-with-activities
    :datastore/metadata-by-id qds/metadata-by-id
+
+   :search/dashboard search/dashboard
+   :search/datapack-files search/datapack-files
+   :search/datapack-files-expand search/datapack-files-expand
 
    :groups/search qh/group-search})
 

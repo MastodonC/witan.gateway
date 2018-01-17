@@ -11,7 +11,7 @@
   "Constructs the current development system."
   []
   (alter-var-root #'system
-                  (constantly (new-system (keyword (env :system-profile "development"))))))
+                  (constantly (new-system (keyword (env :system-profile "dev-staging"))))))
 
 (defn start
   "Starts the current development system."

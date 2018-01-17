@@ -5,21 +5,25 @@ STAGING_ACCESS_PEM=${2:?"Pem file for accessing staging"}
 
 DATASTORE_IP=$(curl "http://masters.staging.witan.mastodonc.net/marathon/v2/apps/kixi.datastore/tasks" 2> /dev/null | jq '.tasks[].host' | sort -R | head -n 1 | xargs echo)
 HEIMDALL_IP=$(curl "http://masters.staging.witan.mastodonc.net/marathon/v2/apps/kixi.heimdall/tasks" 2> /dev/null | jq '.tasks[].host' | sort -R | head -n 1 | xargs echo)
+SEARCH_IP=$(curl "http://masters.staging.witan.mastodonc.net/marathon/v2/apps/kixi.search/tasks" 2> /dev/null | jq '.tasks[].host' | sort -R | head -n 1 | xargs echo)
 
-echo "Adding datastore hosts line"
+echo "Adding hosts line"
 sudo cp /etc/hosts .temp_hosts
 echo "127.0.0.1 kixi.datastore.marathon.mesos" | sudo tee -a /etc/hosts
 echo "127.0.0.1 kixi.heimdall.marathon.mesos" | sudo tee -a /etc/hosts
+echo "127.0.0.1 kixi.search.marathon.mesos" | sudo tee -a /etc/hosts
 
 ssh -oStrictHostKeyChecking=no core@$DATASTORE_IP -i $STAGING_ACCESS_PEM -L 18080:$DATASTORE_IP:18080 -N &
 DATASTORE_TUNNEL_PID=$!
 ssh -oStrictHostKeyChecking=no core@$HEIMDALL_IP -i $STAGING_ACCESS_PEM -L 10010:$HEIMDALL_IP:10010 -N &
 HEIMDALL_TUNNEL_PID=$!
+ssh -oStrictHostKeyChecking=no core@$SEARCH_IP -i $STAGING_ACCESS_PEM -L 18091:$SEARCH_IP:18091 -N &
+SEARCH_TUNNEL_PID=$!
 
 function cleanup {
 
     echo "Tearing down tunnels"
-    kill $DATASTORE_TUNNEL_PID $HEIMDALL_TUNNEL_PID
+    kill $DATASTORE_TUNNEL_PID $HEIMDALL_TUNNEL_PID $SEARCH_TUNNEL_PID
 
     echo "Restoring original hosts file"
     sudo mv .temp_hosts /etc/hosts
