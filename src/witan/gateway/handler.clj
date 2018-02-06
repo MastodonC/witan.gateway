@@ -161,7 +161,8 @@
    :kixi.datastore/add-files-to-bundle :kixi.datastore.metadatastore/id
    :kixi.datastore/delete-file :kixi.datastore.metadatastore/id
    :kixi.datastore.filestore/initiate-file-upload uuid
-   :kixi.datastore.filestore/complete-file-upload :kixi.datastore.filestore/id})
+   :kixi.datastore.filestore/complete-file-upload :kixi.datastore.filestore/id
+   :kixi.collect/collection-requested :kixi.datastore.metadatastore/id})
 
 (defn partition-key-fn
   [cmd-key]
