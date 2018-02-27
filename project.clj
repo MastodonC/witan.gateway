@@ -18,7 +18,7 @@
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
                  [kixi/kixi.comms "0.2.31"]
-                 [kixi/kixi.log "0.1.5"]
+                 [kixi/kixi.log "0.1.6"]
                  [kixi/kixi.metrics "0.4.1"]
                  [metrics-clojure ~metrics-version]
                  [metrics-clojure-jvm ~metrics-version]
