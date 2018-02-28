@@ -15,7 +15,7 @@
     (let [response (http/post (str search-url "metadata")
                               {:body (json/generate-string
                                       {:query {:kixi.datastore.metadatastore.query/name {:match search-term}
-                                               :kixi.datastore.metadatastore.query/type {:contains "stored"}}
+                                               :kixi.datastore.metadatastore.query/type {:equal "stored"}}
                                        :fields [:kixi.datastore.metadatastore/name
                                                 :kixi.datastore.metadatastore/id
                                                 [:kixi.datastore.metadatastore/provenance
