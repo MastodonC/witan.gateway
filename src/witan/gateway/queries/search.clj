@@ -5,7 +5,7 @@
             [cheshire.core :as json]
             [taoensso.timbre :as log]))
 
-(defn minimal-search
+(defn minimal-file-search
   [u d {:keys [search-term
                from]
         :as search
@@ -13,19 +13,21 @@
              search-term ""}}]
   (let [search-url (directory-url :search d)]
     (let [response (http/post (str search-url "metadata")
-                              {:body (json/generate-string {:query {:kixi.datastore.metadatastore.query/name {:match search-term}}
-                                                            :fields [:kixi.datastore.metadatastore/name
-                                                                     :kixi.datastore.metadatastore/id
-                                                                     [:kixi.datastore.metadatastore/provenance
-                                                                      :kixi.datastore.metadatastore/created]
-                                                                     [:kixi.datastore.metadatastore/provenance
-                                                                      :kixi.user/id]
-                                                                     :kixi.datastore.metadatastore/type
-                                                                     :kixi.datastore.metadatastore/file-type
-                                                                     :kixi.datastore.metadatastore/license
-                                                                     :kixi.datastore.metadatastore/size-bytes
-                                                                     :kixi.datastore.metadatastore/sharing]
-                                                            :from from})
+                              {:body (json/generate-string
+                                      {:query {:kixi.datastore.metadatastore.query/name {:match search-term}
+                                               :kixi.datastore.metadatastore.query/type {:contains "stored"}}
+                                       :fields [:kixi.datastore.metadatastore/name
+                                                :kixi.datastore.metadatastore/id
+                                                [:kixi.datastore.metadatastore/provenance
+                                                 :kixi.datastore.metadatastore/created]
+                                                [:kixi.datastore.metadatastore/provenance
+                                                 :kixi.user/id]
+                                                :kixi.datastore.metadatastore/type
+                                                :kixi.datastore.metadatastore/file-type
+                                                :kixi.datastore.metadatastore/license
+                                                :kixi.datastore.metadatastore/size-bytes
+                                                :kixi.datastore.metadatastore/sharing]
+                                       :from from})
                                :content-type :json
                                :accept :json
                                :throw-exceptions false
@@ -40,12 +42,13 @@
 
 (defn dashboard
   [u d search]
-  (minimal-search u d search))
+  ;;need to support the types here
+  )
 
 (defn datapack-files
   [u d search]
-  (minimal-search u d search))
+  (minimal-file-search u d search))
 
 (defn datapack-files-expand
   [u d search]
-  (minimal-search u d search))
+  (minimal-file-search u d search))
