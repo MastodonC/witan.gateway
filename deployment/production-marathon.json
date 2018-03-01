@@ -3,14 +3,14 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "mastodonc/witan.gateway:@@TAG@@",
+      "image": "OVERRIDDEN_BY_JENKINS",
       "parameters": [
          {"key": "env", "value": "ENVIRONMENT=prod"},
          {"key": "env", "value": "JAVA_OPTS=-Xmx248M"},
          {"key": "env", "value": "SECRETS_BUCKET=prod-witan-kixi-heimdall-vault"},
          {"key": "env", "value": "AWS_REGION=eu-west-1"},
          {"key": "label", "value": "cluster=prod"},
-         {"key": "label", "value": "application=witan-gateway"}
+         {"key": "label", "value": "application=witan.gateway"}
       ],
       "network": "BRIDGE",
       "portMappings": [
@@ -22,7 +22,7 @@
       ]
     }
   },
-  "id": "witan-gateway",
+  "id": "OVERRIDDEN_BY_JENKINS",
   "constraints": [["hostname", "UNIQUE"]],
   "instances": 1,
   "cpus": 0.2,

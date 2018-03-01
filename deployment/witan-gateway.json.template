@@ -10,7 +10,7 @@
                 {"key": "env", "value": "SECRETS_BUCKET=@@SECRETS_BUCKET@@"},
                 {"key": "env", "value": "AWS_REGION=@@AWS_REGION@@"},
                 {"key": "label", "value": "cluster=@@ENVIRONMENT@@"},
-                {"key": "label", "value": "application=witan-gateway"}
+                {"key": "label", "value": "application=@@APP_NAME@@"}
             ],
             "network": "BRIDGE",
             "portMappings": [
@@ -22,7 +22,7 @@
             ]
         }
     },
-    "id": "witan-gateway",
+    "id": "@@APP_NAME@@",
     "constraints": [["hostname", "UNIQUE"]],
     "instances": @@INSTANCE_COUNT@@,
     "cpus": @@CPUS@@,
