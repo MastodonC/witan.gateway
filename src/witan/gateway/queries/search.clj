@@ -53,9 +53,3 @@
   (minimal-metadata-search u d
                            (assoc search
                                   :metadata-type "stored")))
-
-(defn datapack-files-expand
-  [u d search]
-  (minimal-metadata-search u d
-                           (assoc search
-                                  :metadata-type "stored")))

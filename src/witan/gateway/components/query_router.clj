@@ -24,7 +24,7 @@
 
    :search/dashboard search/dashboard
    :search/datapack-files search/datapack-files
-   :search/datapack-files-expand search/datapack-files-expand
+   :search/datapack-files-expand search/datapack-files
 
    :groups/search qh/group-search})
 
