@@ -30,7 +30,8 @@
                                                 :kixi.datastore.metadatastore/license
                                                 :kixi.datastore.metadatastore/size-bytes
                                                 :kixi.datastore.metadatastore/sharing]
-                                       :from from})
+                                       :from from
+                                       :size 50})
                                :content-type :json
                                :accept :json
                                :throw-exceptions false
