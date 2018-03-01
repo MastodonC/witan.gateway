@@ -5,17 +5,20 @@
             [cheshire.core :as json]
             [taoensso.timbre :as log]))
 
-(defn minimal-file-search
+(defn minimal-metadata-search
   [u d {:keys [search-term
-               from]
+               from
+               metadata-type]
         :as search
         :or {from 0
              search-term ""}}]
   (let [search-url (directory-url :search d)]
     (let [response (http/post (str search-url "metadata")
                               {:body (json/generate-string
-                                      {:query {:kixi.datastore.metadatastore.query/name {:match search-term}
-                                               :kixi.datastore.metadatastore.query/type {:equal "stored"}}
+                                      {:query
+                                       (merge {:kixi.datastore.metadatastore.query/name {:match search-term}}
+                                              (when metadata-type
+                                                {:kixi.datastore.metadatastore.query/type {:equals metadata-type}}))
                                        :fields [:kixi.datastore.metadatastore/name
                                                 :kixi.datastore.metadatastore/id
                                                 [:kixi.datastore.metadatastore/provenance
@@ -47,8 +50,12 @@
 
 (defn datapack-files
   [u d search]
-  (minimal-file-search u d search))
+  (minimal-metadata-search u d
+                           (assoc search
+                                  :metadata-type "stored")))
 
 (defn datapack-files-expand
   [u d search]
-  (minimal-file-search u d search))
+  (minimal-metadata-search u d
+                           (assoc search
+                                  :metadata-type "stored")))
