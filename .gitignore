@@ -17,3 +17,5 @@ pom.xml.asc
 aws-variables.env
 resources/local.edn
 .temp_hosts
+/.idea/
+/witan.gateway.iml
