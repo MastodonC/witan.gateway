@@ -5,51 +5,31 @@
             [cheshire.core :as json]
             [taoensso.timbre :as log]))
 
-(defn minimal-metadata-search
-  [u d {:keys [search-term
-               from
-               metadata-type]
-        :as search
-        :or {from 0
-             search-term ""}}]
+(defn execute-search
+  [u d search]
   (let [search-url (directory-url :search d)]
     (let [response (http/post (str search-url "metadata")
-                              {:body (json/generate-string
-                                      {:query
-                                       (merge {:kixi.datastore.metadatastore.query/name {:match search-term}}
-                                              (when metadata-type
-                                                {:kixi.datastore.metadatastore.query/type {:equals metadata-type}}))
-                                       :fields [:kixi.datastore.metadatastore/name
-                                                :kixi.datastore.metadatastore/id
-                                                [:kixi.datastore.metadatastore/provenance
-                                                 :kixi.datastore.metadatastore/created]
-                                                [:kixi.datastore.metadatastore/provenance
-                                                 :kixi.user/id]
-                                                :kixi.datastore.metadatastore/type
-                                                :kixi.datastore.metadatastore/file-type
-                                                :kixi.datastore.metadatastore/license
-                                                :kixi.datastore.metadatastore/size-bytes
-                                                :kixi.datastore.metadatastore/sharing]
-                                       :from from})
-                               :content-type :json
+                              {:body (json/generate-string search)
                                :accept :json
                                :throw-exceptions false
                                :as :json
                                :headers (user-header u)})]
       (if (= 200 (:status response))
-        {:search-term search-term
+        {:search search
          :items (mapv (partial ds/expand-metadata u d)
                       (get-in response [:body :items]))
          :paging (get-in response [:body :paging])}
-        (error-response "search minimal search" response)))))
+        (error-response "search execute search" response)))))
 
-(defn dashboard
-  [u d search]
-  ;;need to support the types here
-  )
-
-(defn datapack-files
-  [u d search]
-  (minimal-metadata-search u d
-                           (assoc search
-                                  :metadata-type "stored")))
+(defn metadata-by-id
+  [u d id]
+  (let [search-url (directory-url :search d)
+        response (http/get (str search-url "metadata/" id)
+                           {:content-type :json
+                            :accept :json
+                            :throw-exceptions false
+                            :as :json
+                            :headers (user-header u)})]
+    (if (= 200 (:status response))
+      (ds/expand-metadata u d (:body response))
+      (error-response "search metadata by id" response))))
