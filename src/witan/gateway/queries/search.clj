@@ -23,8 +23,8 @@
 
 (defn metadata-by-id
   [u d id]
-  (let [search-url (directory-url :search d)
-        response (http/get (str search-url "metadata/" id)
+  (let [search-url (directory-url :search d "metadata/" id)
+        response (http/get search-url
                            {:content-type :json
                             :accept :json
                             :throw-exceptions false
