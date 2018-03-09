@@ -22,9 +22,9 @@
    :datastore/metadata-with-activities qds/metadata-with-activities
    :datastore/metadata-by-id qds/metadata-by-id
 
-   :search/dashboard search/dashboard
-   :search/datapack-files search/datapack-files
-   :search/datapack-files-expand search/datapack-files
+   :search/dashboard search/execute-search
+   :search/datapack-files search/execute-search
+   :search/datapack-files-expand search/execute-search
 
    :groups/search qh/group-search})
 
