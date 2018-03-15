@@ -20,8 +20,7 @@
 (defn wrap-catch-exceptions [handler]
   (fn [request]
     (try (handler request)
-         (catch Throwable t (log/error (assoc t :request request)
-                                       (str "An exception was thrown whilst processing a request:" (pr-str request)))))))
+         (catch Throwable t (log/error t (str "An exception was thrown whilst processing a request:" (pr-str request)))))))
 
 (defn wrap-components
   "Assoc given components to the request."
