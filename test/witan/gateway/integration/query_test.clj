@@ -78,7 +78,7 @@
     (is (<= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
     (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) 0))))
 
-(deftest metadata-activites-count-
+(deftest metadata-activites-count-?
   (let [rcount (rand-nth (range 5 15))
         rindex (rand-nth (range 5 15))
         qid (uuid)
@@ -88,5 +88,5 @@
     (wait-for-pred #(deref resp))
     (is (= (:kixi.comms.message/type @resp) "query-response"))
     (is (= (:kixi.comms.query/id @resp) qid))
-    (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
+    (is (<= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
     (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) rindex))))
