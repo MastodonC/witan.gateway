@@ -25,6 +25,7 @@
    :search/dashboard search/execute-search
    :search/datapack-files search/execute-search
    :search/datapack-files-expand search/execute-search
+   :search/metadata-by-id search/metadata-by-id
 
    :groups/search qh/group-search})
 
