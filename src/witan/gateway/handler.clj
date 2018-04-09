@@ -162,7 +162,8 @@
    :kixi.datastore/delete-file :kixi.datastore.metadatastore/id
    :kixi.datastore.filestore/initiate-file-upload uuid
    :kixi.datastore.filestore/complete-file-upload :kixi.datastore.filestore/id
-   :kixi.collect/request-collection :kixi.datastore.metadatastore/id})
+   :kixi.collect/request-collection :kixi.datastore.metadatastore/id
+   :kixi.datastore/sharing-change :kixi.datastore.metadatastore/id})
 
 (defn partition-key-fn
   [cmd-key]
