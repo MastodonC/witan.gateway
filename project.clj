@@ -24,7 +24,8 @@
                  [metrics-clojure-jvm ~metrics-version]
                  [metrics-clojure-ring ~metrics-version]
                  [buddy/buddy-sign "1.3.0"]
-                 [spootnik/signal "0.2.1"]]
+                 [spootnik/signal "0.2.1"]
+                 [com.cognitect/transit-clj "0.8.303"]]
   :source-paths ["src"]
   :profiles {:uberjar {:aot  :all
                        :main witan.gateway.system
