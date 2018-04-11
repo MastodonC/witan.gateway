@@ -90,3 +90,31 @@
     (is (= (:kixi.comms.query/id @resp) qid))
     (is (<= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :count]) rcount))
     (is (= (get-in @resp [:kixi.comms.query/results 0 :datastore/metadata-with-activities :paging :index]) rindex))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftest get-groups
+  (let [rcount (rand-nth (range 5 15))
+        qid (uuid)
+        qid2 (uuid)
+        resp (atom nil)
+        get-items #(-> %1 :kixi.comms.query/results first %2 :items)]
+    (testing "Get all groups"
+      (reset! received-fn #(reset! resp %))
+      (send-query qid :groups/search [])
+      (wait-for-pred #(deref resp))
+      (is (= (:kixi.comms.message/type @resp) "query-response"))
+      (is (= (:kixi.comms.query/id @resp) qid))
+      (is (not-empty (get-items @resp :groups/search))))
+    (testing "Get specific groups"
+      (let [group-ids (->> (get-items @resp :groups/search)
+                           (map :kixi.group/id)
+                           (shuffle)
+                           (take 2)
+                           (set))]
+        (reset! resp nil)
+        (send-query qid2 :groups/by-ids group-ids)
+        (wait-for-pred #(deref resp))
+        (is (= (:kixi.comms.message/type @resp) "query-response"))
+        (is (= (:kixi.comms.query/id @resp) qid2))
+        (is (= group-ids (set (map :kixi.group/id (get-items @resp :groups/by-ids)))))))))
