@@ -27,7 +27,8 @@
    :search/datapack-files-expand search/execute-search
    :search/metadata-by-id search/metadata-by-id
 
-   :groups/search qh/group-search})
+   :groups/search qh/group-search
+   :groups/by-ids qh/get-groups-info})
 
 (defrecord QueryRouter [service-map]
   RouteQuery
