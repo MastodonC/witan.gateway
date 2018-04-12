@@ -17,7 +17,7 @@
                  [aero "1.0.0-beta5"]
                  [clj-time "0.12.0"]
                  [zookeeper-clj "0.9.4"]
-                 [kixi/kixi.comms "0.2.31" :upgrade :kixi]
+                 [kixi/kixi.comms "0.2.37" :upgrade :kixi]
                  [kixi/kixi.log "0.1.6" :upgrade :kixi]
                  [kixi/kixi.metrics "0.4.1" :upgrade :kixi]
                  [metrics-clojure ~metrics-version]
