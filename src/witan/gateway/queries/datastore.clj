@@ -1,6 +1,7 @@
 (ns witan.gateway.queries.datastore
   (:require [taoensso.timbre :as log]
             [clj-http.client :as http]
+            [medley :refer [map-vals]]
             ;;
             [witan.gateway.queries.utils :refer [directory-url user-header error-response]]
             [witan.gateway.queries.heimdall :as heimdall]))
@@ -25,40 +26,28 @@
   (let [prov-user-id
         (get-in item [:kixi.datastore.metadatastore/provenance
                       :kixi.user/id])
-        user-info (heimdall/get-users-info u d [prov-user-id])]
+        user-info (heimdall/get-user-info u d prov-user-id)]
     (if (:error user-info)
       (error (format "Heimdall failed to return user information for %s: %s"
                      prov-user-id
                      user-info))
-      (-> item
-          (assoc-in [:kixi.datastore.metadatastore/provenance
-                     :kixi/user] (first (:items user-info)))
-          (update :kixi.datastore.metadatastore/provenance dissoc :kixi.user/id)))))
+      (update item
+              :kixi.datastore.metadatastore/provenance
+              #(-> %
+                   (assoc :kixi/user (first (:items user-info)))
+                   (dissoc :kixi.user/id))))))
 
 (defn expand-sharing
   [u d item]
-  (let [collected-groups (some->>
-                          (:kixi.datastore.metadatastore/sharing item)
-                          (vals)
-                          (reduce concat)
-                          (set))]
-    (if collected-groups
-      (let [group-resp (heimdall/get-groups-info u d collected-groups)]
-        (if (:error group-resp)
-          (error (format "Heimdall failed to return group information for %s: %s"
-                         collected-groups
-                         group-resp))
-          (let [group-info (reduce (fn [a m] (assoc a (:kixi.group/id m) m))
-                                   {}
-                                   (:items group-resp))]
-            (update item
-                    :kixi.datastore.metadatastore/sharing
-                    (fn [sharing]
-                      (zipmap (keys sharing)
-                              (map #(->> (mapv group-info %)
-                                         (keep identity)
-                                         (vec)) (vals sharing))))))))
-      item)))
+  (update item
+          :kixi.datastore.metadatastore/sharing
+          #(map-vals
+            (fn get-group-data
+              [groups]
+              (mapv (comp first :items
+                          (partial heimdall/get-group-info u d))
+                    groups))
+            %)))
 
 (defn expand-metadata
   [u d item]
