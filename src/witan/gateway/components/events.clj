@@ -19,6 +19,17 @@
     (run! (fn [x] (x event)) @receivers))
   nil)
 
+(defn get-consumer-name
+  [host port]
+  (let [zk (zk/connect (str host ":" port))
+        seq-name (zk/create-all zk "/kixi/gateway/events/consumer-" :sequential? true)]
+    (zk/close zk)
+    (clojure.string/replace (subs seq-name 1) #"/" "-")))
+
+(defn get-fake-consumer-name
+  []
+  (str "kixi-gateway-events-consumer-" (java.util.UUID/randomUUID)))
+
 (defrecord EventAggregator [host port]
   AggregateEvents
   (register-event-receiver! [{:keys [receivers]} handler-fn]
@@ -28,9 +39,8 @@
   component/Lifecycle
   (start [{:keys [comms] :as component}]
     (log/info "Starting Event Aggregator")
-    (let [zk (zk/connect (str host ":" port))
-          seq-name (zk/create-all zk "/kixi/gateway/events/consumer-" :sequential? true)
-          consumer-name (clojure.string/replace (subs seq-name 1) #"/" "-")
+    (let [;;consumer-name (get-consumer-name host port)
+          consumer-name (get-fake-consumer-name)
           receivers (atom #{})
           ehs [(c/attach-event-with-key-handler!
                 (assoc-in comms [:consumer-config :auto.offset.reset] :latest)
@@ -43,7 +53,6 @@
                 :kixi.command/id
                 (partial handle-events receivers))]]
       (log/info "Using consumer group:" consumer-name)
-      (zk/close zk)
       (assoc component
              :event-handlers ehs
              :receivers receivers)))

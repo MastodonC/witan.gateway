@@ -17,6 +17,11 @@
       (zk/close zk-conn)
       (str app "-" number))))
 
+(defn- fake-app-name
+  [{:keys [host port]}]
+  (fn [app]
+    (str app "-" (java.util.UUID/randomUUID))))
+
 (defn- table-exists?
   [endpoint table]
   (try
@@ -78,4 +83,4 @@
             :inner-comms)))
 
 (defn new-comms-wrapper [config zk-config]
-  (map->CommsWrapper {:config (update config :app (fix-app-name zk-config))}))
+  (map->CommsWrapper {:config (update config :app (fake-app-name zk-config))}))
