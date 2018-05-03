@@ -1,5 +1,5 @@
 {:service-name "witan.gateway"
- ;;:local-args #include "local.edn"
+ :local-args #include "local.edn"
  :zk {:host #profile {:default #or [#env ZOOKEEPER "127.0.0.1"]
                       :dev-staging ^:ref [:local-args :zk]
                       :staging-jenkins "master.mesos"
@@ -26,6 +26,16 @@
                                           :initial-lease-table-write-capacity 1
                                           :streams {:event #or [#env EVENT_STREAM "staging-witan-event"]
                                                     :command #or [#env COMMAND_STREAM "staging-witan-command"]}}
+                            :kops-spike {:profile "kops-spike"
+                                         :app ^:ref [:service-name]
+                                         :endpoint "kinesis.eu-west-1.amazonaws.com"
+                                         :dynamodb-endpoint "dynamodb.eu-west-1.amazonaws.com"
+                                         :region-name "eu-west-1"
+                                         :metrics-level :NONE
+                                         :initial-lease-table-read-capacity 2
+                                         :initial-lease-table-write-capacity 2
+                                         :streams {:event "kops-spike-witan-event"
+                                                   :command "kops-spike-witan-command"}}
                             :staging-jenkins {:profile "staging-jenkins"
                                               :app ^:ref [:service-name]
                                               :endpoint "kinesis.eu-central-1.amazonaws.com"
@@ -62,6 +72,7 @@
  :auth {:pubkey #profile {:default #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
                                         ^:ref [:local-args :auth-pubkey]
                                         "./test-resources/heimdall-dev_pubkey.pem"]
+                          :kops-spike "/root/prod_pubkey.pem"
                           :staging "/root/prod_pubkey.pem"
                           :prod "/root/prod_pubkey.pem"}}
  :metrics {:json-reporter {:seconds #profile {:default 300
@@ -82,6 +93,8 @@
                                                :port #or [#env HEIMDALL_PORT 3002]}
                                  :dev-staging {:host "localhost"
                                                :port 10010}
+                                 :kops-spike {:host "kixi-heimdall"
+                                              :port 3000}
                                  :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
                                  :staging {:host "kixi.heimdall.marathon.mesos"
@@ -92,6 +105,8 @@
                                                 :port #or [#env DATASTORE_PORT 8080]}
                                   :dev-staging {:host "kixi.datastore.marathon.mesos"
                                                 :port 18080}
+                                  :kops-spike {:host "kixi-datastore"
+                                               :port 18080}
                                   :staging-jenkins {:host "kixi.datastore.marathon.mesos"
                                                     :port 18080}
                                   :staging {:host "kixi.datastore.marathon.mesos"
@@ -101,8 +116,9 @@
              :search #profile {:development {:host #or [#env SEARCH_HOST "localhost"]
                                              :port #or [#env SEARCH_PORT 8091]}
                                :dev-staging {:host "localhost"; "kixi.search.marathon.mesos"
-                                             :port 18091
-                                             }
+                                             :port 18091}
+                               :kops-spike {:host "kixi-search"
+                                            :port 18091}
                                :staging-jenkins {:host "kixi.search.marathon.mesos"
                                                  :port 18091}
                                :staging {:host "kixi.search.marathon.mesos"
@@ -111,6 +127,7 @@
                                       :port 18091}}}
  :log {:level #profile {:development :debug
                         :dev-staging :debug
+                        :kops-spike :info
                         :staging-jenkins :debug
                         :staging :info
                         :prod  :warn}
@@ -118,6 +135,7 @@
  :downloads {:timeout 10000}
  :verbose-logging? #profile {:development true
                              :dev-staging true
+                             :kops-spike false
                              :staging-jenkins true
                              :staging false
                              :prod  false}}
