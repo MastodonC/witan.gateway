@@ -72,6 +72,7 @@
  :auth {:pubkey #profile {:default #or [#env SUPER_SECRET_PUBLIC_PEM_FILE
                                         ^:ref [:local-args :auth-pubkey]
                                         "./test-resources/heimdall-dev_pubkey.pem"]
+                          :kops-spike "/root/prod_pubkey.pem"
                           :staging "/root/prod_pubkey.pem"
                           :prod "/root/prod_pubkey.pem"}}
  :metrics {:json-reporter {:seconds #profile {:default 300
