@@ -127,7 +127,7 @@
                                       :port 18091}}}
  :log {:level #profile {:development :debug
                         :dev-staging :debug
-                        :kops-spike :info
+                        :kops-spike :debug
                         :staging-jenkins :debug
                         :staging :info
                         :prod  :warn}
@@ -135,7 +135,7 @@
  :downloads {:timeout 10000}
  :verbose-logging? #profile {:development true
                              :dev-staging true
-                             :kops-spike false
+                             :kops-spike true
                              :staging-jenkins true
                              :staging false
                              :prod  false}}
