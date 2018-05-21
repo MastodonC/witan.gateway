@@ -84,7 +84,7 @@
                                                :port 10010}
                                  :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
-                                 :staging {:host "kixi.heimdall.marathon.mesos"
+                                 :staging {:host "kixi-heimdall.witan.local"
                                            :port 10010}
                                  :prod {:host "kixi.heimdall.marathon.mesos"
                                         :port 10010}}
@@ -94,7 +94,7 @@
                                                 :port 18080}
                                   :staging-jenkins {:host "kixi.datastore.marathon.mesos"
                                                     :port 18080}
-                                  :staging {:host "kixi.datastore.marathon.mesos"
+                                  :staging {:host "kixi-datastore.witan.local"
                                             :port 18080}
                                   :prod {:host "kixi.datastore.marathon.mesos"
                                          :port 18080}                                  }
@@ -105,7 +105,7 @@
                                              }
                                :staging-jenkins {:host "kixi.search.marathon.mesos"
                                                  :port 18091}
-                               :staging {:host "kixi.search.marathon.mesos"
+                               :staging {:host "kixi-search.witan.local"
                                          :port 18091}
                                :prod {:host "kixi.search.marathon.mesos"
                                       :port 18091}}}
