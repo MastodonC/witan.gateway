@@ -93,7 +93,7 @@
                                                :port #or [#env HEIMDALL_PORT 3002]}
                                  :dev-staging {:host "localhost"
                                                :port 10010}
-                                 :kops-spike {:host "kixi-heimdall"
+                                 :kops-spike {:host "kixi-heimdall.witan.local"
                                               :port 3000}
                                  :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
@@ -105,7 +105,7 @@
                                                 :port #or [#env DATASTORE_PORT 8080]}
                                   :dev-staging {:host "kixi.datastore.marathon.mesos"
                                                 :port 18080}
-                                  :kops-spike {:host "kixi-datastore"
+                                  :kops-spike {:host "kixi-datastore.witan.local"
                                                :port 18080}
                                   :staging-jenkins {:host "kixi.datastore.marathon.mesos"
                                                     :port 18080}
@@ -117,7 +117,7 @@
                                              :port #or [#env SEARCH_PORT 8091]}
                                :dev-staging {:host "localhost"; "kixi.search.marathon.mesos"
                                              :port 18091}
-                               :kops-spike {:host "kixi-search"
+                               :kops-spike {:host "kixi-search.witan.local"
                                             :port 18091}
                                :staging-jenkins {:host "kixi.search.marathon.mesos"
                                                  :port 18091}
