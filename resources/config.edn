@@ -85,7 +85,7 @@
                                  :staging-jenkins {:host "kixi.heimdall.marathon.mesos"
                                                    :port 10010}
                                  :staging {:host "kixi-heimdall.witan.local"
-                                           :port 10010}
+                                           :port 3000}
                                  :prod {:host "kixi.heimdall.marathon.mesos"
                                         :port 10010}}
              :datastore #profile {:development {:host #or [#env DATASTORE_HOST "localhost"]
