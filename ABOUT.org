@@ -1,0 +1,300 @@
+* witan.gateway
+
+**** May 2018
+
+/This document assumes familiarity with the Witan architecture, CQRS and event-sourcing./
+
+*witan.gateway* (aka 'The Gateway') is the service responsible for connecting front-end clients (~witan.ui~) with the services inside the Witan cluster. It
+achieves this with a combination of HTTP endpoints and a Websocket API.
+
+The HTTP API allows the client to do 'non authenticated' actions such as /login/, /consume an invite token/ or /reset a password/.
+
+The Websocket API allows the client to send commands and queries, and receive events and query responses asynchronously. Each Websocket API call includes
+an 'auth token' ([[https://funcool.github.io/buddy-auth/latest/#encrypted-jwt][JWE]]) which is decoded and validated by the Gateway - if it's valid then the Gateway permits that message; services inside the cluster do
+not re-check this token once the Gateway has passed it on, which means the cluster assumes that the Gateway is a [[https://en.wikipedia.org/wiki/DMZ_(computing)][DMZ]].
+
+There are two other properties that separate the Gateway from other services:
+
+- It it entirely stateless; there are no dependencies on other databases (besides ZooKeeper but more on this later).
+- Each instance uses a unique 'consumer group/app name' to ensure that it will not share events with other instance. Every instance needs to receive every
+event in case it's destined for a client that instance is connected to.
+
+** History
+
+The original requirement for the Gateway was in response to the decision to use CQRS/ES. Unlike the standard HTTP REST request/response model, events are
+asynchronous and therefore this 'push' mechanism, where events could be propagated to a client, was something considered from the very start. Websockets
+were the obvious solution to this, and so the Gateway maintains a connection to clients as they visit the site, pushing up any events that it considers
+to be relevant to the logged-in user.
+
+At some point the idea of a '[[https://samnewman.io/patterns/architectural/bff/][BFF]]' - 'back-end for front-end' - felt like a good direction for the Gateway to continue in, and so some concessions have been
+made to facilitate the requirements of ~witan.ui~, especially in the way queries are translated.
+
+** Component Diagrams
+
+*** System Overview
+
+#+BEGIN_SRC plantuml :file docs/components.png :results silent
+package "Witan Cluster" {
+  [kixi.datastore]
+  [kixi.heimdall]
+  [kixi.search]
+  [witan.gateway] #LightGreen
+}
+
+cloud {
+  [witan.ui] #Pink
+}
+
+node "AWS" {
+
+database "kinesis" {
+  [streams]
+}
+
+database "s3" {
+  [file bucket]
+}
+
+}
+
+User -> [witan.ui]
+[witan.ui] -> [witan.gateway]
+[witan.gateway] --> [streams] #Green
+[witan.gateway] --> [kixi.datastore]
+[witan.gateway] --> [kixi.heimdall]
+[witan.gateway] --> [kixi.search]
+[streams] -> [witan.gateway] #Blue
+[witan.ui] --> [file bucket]
+#+END_SRC
+
+[[file:docs/components.png]]
+
+The above diagram illustrates the Gateway's position in the cluster. It proxies Commands and Events from ~witan.ui~ and it responds to queries by accessing
+the HTTP endpoints on the relevant services.
+
+*** Application Overview
+
+#+BEGIN_SRC plantuml :file docs/application.png :results silent
+top to bottom direction
+package "witan.gateway" {
+  package "queries" #LightBlue {
+    [::queries/datastore]
+    [::queries/heimdall]
+    [::queries/search]
+    [::queries/utils]
+  }
+
+  package "components" #LightGreen {
+    [::components/auth]
+    [::components/comms-wrapper]
+    [::components/connection-manager]
+    [::components/downloads]
+    [::components/events]
+    [::components/query-router]
+    [::components/server]
+  }
+
+  [::handler]
+  [::system]
+  [::protocols]
+}
+
+node "External Services" {
+
+database "kinesis" {
+  [commands]
+  [events]
+}
+
+database "zookeeper" {
+}
+}
+
+cloud {
+  [witan.ui] #Pink
+}
+
+node "Services" {
+  [kixi.datastore]
+  [kixi.heimdall]
+  [kixi.search]
+}
+
+' Connections
+[::system] --> components : creates each
+[::protocols] ..> components : implemented by
+[::components/server] -> [::handler] : registers
+[witan.ui] --> [::handler] : http (transit+json)
+[witan.ui] <--> [::handler] #Green : websocket (transit+json)
+[::handler] -> [commands] : commands
+[::handler] --> [::components/query-router] : queries
+[::handler] --> [kixi.heimdall] #Purple : proxy
+[::handler] --> [::components/auth] : authz
+[::handler] --> [::components/downloads] : redirects
+[::handler] --> [::components/connection-manager]
+[::components/events] -> [::components/connection-manager] #Blue
+[::components/connection-manager] -> [witan.ui] #Green
+[events] -> [::components/events] #Blue
+
+[::components/query-router] --> [::queries/heimdall]
+[::components/query-router] --> [::queries/datastore]
+[::components/query-router] --> [::queries/search]
+[::queries/utils] ..> [::queries/heimdall]
+[::queries/utils] ..> [::queries/datastore]
+[::queries/utils] ..> [::queries/search]
+
+[::components/comms-wrapper] -> zookeeper
+
+[::queries/heimdall] --> [kixi.heimdall]
+[::queries/datastore] --> [kixi.datastore]
+[::queries/search] --> [kixi.search]
+
+' Hidden Connections
+[::protocols] -[hidden]-> [::components/events]
+[::components/auth] -[hidden]-> [::queries/utils]
+
+#+END_SRC
+
+[[file:docs/application.png]]
+
+The above diagram shows a more detailed layout of the Gateway's internal application design.
+
+As you can see, there is a convergence around the 'handler' component which demonstrates that it's overworked and could do with being split up. Currently
+not only is it responsible for routing requests, but a lot of the business logic of handling those requests and responses is also in this namespace.
+
+** Component Summary
+
+This section aims to address each of the high-level components currently being used by the Gateway: Handler, Queries, and Communications.
+
+*** System
+
+| Key Namespaces          | Desciption                                     |
+|-------------------------+------------------------------------------------|
+| witan.gateway.system    | Component system definition and creation       |
+| witan.gateway.protocols | Specs and protocol for MetaDataStore component |
+
+The Gateway's system namespaces are fairly straightforward compared to some of the other services. ~witan.gateway.system~ describes all the individual
+components essential to getting it up and running. It also provides the application entry point. As with all the Witan microservices, it uses
+[[https://github.com/stuartsierra/component][Stuart sierra's Component library]] to manage the start-up of service components and [[https://github.com/juxt/aero][Juxt's Aero]] to provide parameterised and environment-aware
+configuration.
+
+~witan.gateway.protocols~ provides, in a single namespace, all of the protocols for the other components (e.g. ~Database~, ~RouteQuery~ etc).
+
+*** Handler
+
+| Key Namespaces        | Desciption                                                     |
+|-----------------------+----------------------------------------------------------------|
+| witan.gateway.handler | Contains HTTP and Websocket routes, as well as message routing |
+
+This namespace is the single entry point for connections to the Gateway.
+
+It defines a series of HTTP endpoints, using Compojure's ~defroutes~ macro, such as signup, login and download. These routes are used for operations
+that need to exist outside of the context of a  Websocket connection and therefore don't need authentication at the message level i.e. before a user
+has logged in. Most of the routes, in fact, simply forward their payloads to either ~kixi.heimdall~ or ~kixi.datastore~.
+
+The Websocket endpoint ~/ws~ uses HTTPKit to set up and maintain a connection. Messages received from the frontend are sent to the ~on-receive~ callback
+inside the ~ws-handler~ function. From here, messages are validated and routed using the ~handle-message~ multimethod. There are several message types:
+
+| Message Type | Description                                  |
+|--------------+----------------------------------------------|
+| "refresh"    | Used to refresh a client's auth token        |
+| "ping"       | Used to keep the Websocket connection open   |
+| :command     | Transmitting a 'new' syntax Command message  |
+| "command"    | Transmitting an 'old' syntax Command message |
+| "query"      | Sending a query                              |
+
+
+*** Queries
+
+| Key Namespaces                        | Desciption                                                           |
+|---------------------------------------+----------------------------------------------------------------------|
+| witan.gateway.queries.utils           | A handful of functions to help other query components                |
+| witan.gateway.queries.datastore       | Functions for querying the Datastore (e.g. fetch metadata)           |
+| witan.gateway.queries.heimdall        | Functions for querying Heimdall (e.g. fetch group)                   |
+| witan.gateway.queries.search          | Functions for querying Search (e.g. tag search)                      |
+| witan.gateway.components.query-router | Queries are routed from the frontend to their relevant sub-component |
+
+
+Queries from the frontend are a huge point of responsibility for the Gateway, and each individual query component is responsible for servicing queries
+that touch their relevant service. The BFF model encourages modelling queries in such a way that they make sense to the frontend, and are facilitated
+by the backend. An example of this would be in ~witan.gateway.queries.datastore/metadata-by-id~ which calls down to ~expand-metadata~ and
+~expand-bundled-ids~; because the Datastore doesn't store user/group information (just UUIDs) the Gateway performs follow-up queries to the Heimdall
+service to change the shape of the query response from the Datastore. In the case of ~bundled-ids~, a list of UUIDs becomes a fully-realised list
+of metadata, complete with sharing information (groups and their information).
+
+The QueryRouter is the component responsible for routing incoming queries to the correct sub-component. Following the BFF model, it attempts to abstract
+queries into more domain-relevant terms. For example, ~:search/dashboard~ translates to a standard ~kixi.search~ execution.
+
+Service-to-service communication is all done via HTTP, using transit+json.
+
+*** Communications
+
+| Key Namespaces                              | Desciption                                                                     |
+|---------------------------------------------+--------------------------------------------------------------------------------|
+| witan.gateway.components.auth               | Encapsulates the decryption of auth tokens for the purposes of validation      |
+| witan.gateway.components.comms-wrapper      | Ensures ~kixi.comms~ picks unique names for checkpoint tracking in Kinesis     |
+| witan.gateway.components.events             | Receives events from Kinesis, via ~kixi.comms~; ensures unique consumer groups |
+| witan.gateway.components.connection-manager | Handles Websocket connections                                                  |
+
+The Communications components are a mixed bag, but also vital to the operation of the Gateway.
+
+Authentication of every message is performed by the Authenticator component. As part of the application's loading sequence inside the Docker container it
+downloads, from S3, a secret key that is used to decrypt auth tokens (see ~scripts/download-secrets.sh~). The Authenticator component depends on the
+~buddy.sign~ library. It also ensures the tokens haven't expired.
+
+The CommsWrapper and Events components cover the receiving of events from Kinesis. As previously stated, it's important that every instance of Gateway
+receive every event, as any Gateway instance could hold the connection to a client interested in seeing that event. However, ~kixi.comms~ was designed to
+be used in a Components System directly, which means that CommsWrapper is required in order to first ensure the tables used are of a unique name - clashes
+would mean multiple instances checkpointing into the same tables which would be a disaster. Similarly, for receiving events, event handlers also need to
+ensure they have unique names and the Events component ensures this.
+
+Currently, both components used ZooKeeper to track unique integers used for naming.
+
+*** Testing
+
+Testing in the Gateway is a little light. It predominantly focuses on integration tests, as the whole point of the application is to connect services.
+Local testing has been neglected for some time, and the only way to currently test is with a connection to a staging environment, via a VPN and then
+with the ~scripts/run-against-staging.sh~ script. It makes some assumptions, such as there being a user "test@mastodonc.com" and its credentials; the
+tests perform a login.
+
+*** Honourable Mentions
+
+**** kixi.comms
+
+The Gateway uses our library, ~kixi.comms~ to connect to Kinesis, to send and receive messages from the queue.
+
+** Future
+
+*** Adding new features
+
+Really, the Gateway shouldn't need any new features beyond new queries and new Commands. It's worth looking at examples from other services if ever
+in a position where Command/Event support for a specific feature is required.
+
+**** Commands
+
+When adding features to the frontend you may come across the following error:
+
+~All commands must have a partition key function defined, see Readme for details: ...~
+
+The Gateway doesn't validate the content of incoming Commands, but it has to fixup the correct partition key which means it needs an entry for each one.
+Every time a Command comes from the frontend it is checked against a map ~command-key->partition-key-fn~ in the ~witan.gateway.handler~ namespace. Once
+a key is located, the value is applied as function to the Command in order to extract a partition key. Partition keys are helpful for Kinesis to put
+messages with the same key into the same partitions, which achieves message ordering.
+
+Every new Command issued by ~witan.ui~ will need an entry in this map.
+
+**** Queries
+
+Adding new queries is straightforward. Firstly, identify if you can use an existing query component (~heimdall~, ~datastore~ etc) or whether you require
+a new one. Secondly, add a domain-appropriate key into the QueryRouter - this is what ~witan.ui~ will use to issue the query. Follow the examples in the
+other query components for how to perform HTTP requests. If it's a new service, you will also require an entry into the ~:directory~ field of the config
+file (~config.edn~).
+
+*** Long-term plan
+
+There are a few items of 'technical debt' that need to be addressed:
+
+- ZooKeeper is used to track unique integers, to enable uniqueness and therefore multiple instances. In future, alternatives should be considered in order
+to remove this dependency. It's unclear why UUIDs aren't used.
+- There has never been a piece of work to test scaling the Gateway past a single instance, even though it's believed the work has been done to permit
+this.
