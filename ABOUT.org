@@ -137,6 +137,7 @@ node "Services" {
 [::queries/utils] ..> [::queries/search]
 
 [::components/comms-wrapper] -> zookeeper
+[::components/events] -> zookeeper
 
 [::queries/heimdall] --> [kixi.heimdall]
 [::queries/datastore] --> [kixi.datastore]
