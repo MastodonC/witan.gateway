@@ -289,5 +289,4 @@ file (~config.edn~).
 There are a few items of 'technical debt' that need to be addressed:
 
 - ZooKeeper is used to track unique integers, to enable uniqueness and therefore multiple instances. In future, alternatives should be considered in order to remove this dependency. It's unclear why UUIDs aren't used.
-- There has never been a piece of work to test scaling the Gateway past a single instance, even though it's believed the work has been done to permit
-this.
+- There has never been a piece of work to test scaling the Gateway past a single instance, even though it's believed the work has been done to permit this.
