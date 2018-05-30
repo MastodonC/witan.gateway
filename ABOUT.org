@@ -49,11 +49,6 @@ node "AWS" {
 database "kinesis" {
   [streams]
 }
-
-database "s3" {
-  [file bucket]
-}
-
 }
 
 User -> [witan.ui]
@@ -63,7 +58,6 @@ User -> [witan.ui]
 [witan.gateway] --> [kixi.heimdall]
 [witan.gateway] --> [kixi.search]
 [streams] -> [witan.gateway] #Blue
-[witan.ui] --> [file bucket]
 #+END_SRC
 
 [[file:docs/components.png]]
