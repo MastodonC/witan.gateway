@@ -16,8 +16,7 @@ not re-check this token once the Gateway has passed it on, which means the clust
 There are two other properties that separate the Gateway from other services:
 
 - It it entirely stateless; there are no dependencies on other databases (besides ZooKeeper but more on this later).
-- Each instance uses a unique 'consumer group/app name' to ensure that it will not share events with other instance. Every instance needs to receive every
-event in case it's destined for a client that instance is connected to.
+- Each instance uses a unique 'consumer group/app name' to ensure that it will not share events with other instance. Every instance needs to receive every event in case it's destined for a client that instance is connected to.
 
 ** History
 
