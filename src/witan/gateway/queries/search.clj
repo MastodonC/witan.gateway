@@ -10,14 +10,11 @@
   (let [search-url (directory-url :search d)]
     (let [response (http/post (str search-url "metadata")
                               {:body (json/generate-string search)
-                               :accept :json
+                               :accept :transit+json
                                :throw-exceptions false
-                               :as :json
-                               :headers (user-header u)})]
-      (log/debug "search-url:" search-url)
-      (log/debug "body:" (json/generate-string search))
-      (log/debug "user-header:" (user-header u))
-      (log/debug "response" response)
+                               :as :transit+json
+                               :headers (user-header u)
+                               :coerce :always})]
       (if (= 200 (:status response))
         {:search search
          :items (mapv (partial ds/expand-metadata u d)
@@ -30,10 +27,11 @@
   (let [search-url (directory-url :search d "metadata" id)
         response (http/get search-url
                            {:content-type :json
-                            :accept :json
+                            :accept :transit+json
                             :throw-exceptions false
-                            :as :json
-                            :headers (user-header u)})]
+                            :as :transit+json
+                            :headers (user-header u)
+                            :coerce :always})]
     (if (= 200 (:status response))
       (ds/expand-metadata u d (:body response))
       (error-response "search metadata by id" response))))
