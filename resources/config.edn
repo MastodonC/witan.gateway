@@ -112,12 +112,12 @@
  :log {:level #profile {:development :debug
                         :dev-staging :debug
                         :staging-jenkins :debug
-                        :staging :info
+                        :staging :debug
                         :prod  :warn}
        :options {:stacktrace-fonts {}}}
  :downloads {:timeout 10000}
  :verbose-logging? #profile {:development true
                              :dev-staging true
                              :staging-jenkins true
-                             :staging false
+                             :staging true
                              :prod  false}}

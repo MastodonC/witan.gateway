@@ -14,6 +14,10 @@
                                :throw-exceptions false
                                :as :json
                                :headers (user-header u)})]
+      (log/debug "search-url:" search-url)
+      (log/debug "body:" (json/generate-string search))
+      (log/debug "user-header:" (user-header u))
+      (log/debug "response" response)
       (if (= 200 (:status response))
         {:search search
          :items (mapv (partial ds/expand-metadata u d)
